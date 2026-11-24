@@ -26,9 +26,29 @@ footer{padding:22px;color:#667b8f;text-align:center}
 <button data-tab="dashboard" class="active">Tableau de bord</button><button data-tab="vehicles">Véhicules</button><button data-tab="inspection">Questionnaires départ / retour</button><button data-tab="repairs">Réparations</button><button data-tab="oil">Vidanges</button><button data-tab="history">Historique</button><button data-tab="users">Utilisateurs et droits</button>
 </nav>
 <p id="notice" role="status"></p>
-<section id="dashboard" class="panel"><div class="grid">
+<section id="dashboard" class="panel">
+<div class="grid">
 <div class="stat">Véhicules<b id="sVehicles">—</b></div><div class="stat">Contrôles<b id="sControls">—</b></div><div class="stat">Réparations<b id="sRepairs">—</b></div><div class="stat">Vidanges<b id="sOil">—</b></div>
-</div><div class="card"><h2>Alertes vidange</h2><p>Échéance calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div></section>
+</div>
+<div class="card"><h2>Alertes vidange</h2><p>Échéance calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div>
+
+<!-- AJOUT : Formulaire de changement de mot de passe -->
+<div class="card">
+    <h2>Changer mon mot de passe</h2>
+    <p class="muted">Vous êtes connecté avec : <strong id="currentEmail"></strong></p>
+    <div class="grid">
+        <div>
+            <label for="newPassword">Nouveau mot de passe *</label>
+            <input type="password" id="newPassword" placeholder="Entrez votre nouveau mot de passe (min 6 caractères)">
+        </div>
+    </div>
+    <p style="margin-top:10px;">
+        <button type="button" id="btnUpdatePassword">Mettre à jour le mot de passe</button>
+    </p>
+    <p id="pwdMessage" role="status" style="font-weight:bold;"></p>
+</div>
+
+</section>
 <section id="vehicles" class="panel" hidden><div class="card"><h2>Ajouter / modifier un véhicule</h2><form id="vehicleForm">
 <div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="marque_modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div><div><label>Dernière vidange (km)</label><input name="kilometrage_derniere_vidange" type="number" min="0" step="1"></div></div>
 <button type="submit">Enregistrer le véhicule</button><button type="reset" class="secondary">Effacer</button></form></div><div class="card"><h2>Parc automobile</h2><div class="tablewrap"><table><thead><tr><th>Immatriculation</th><th>Modèle</th><th>Kilométrage</th><th>Vidange à</th><th>Action</th></tr></thead><tbody id="vehiclesRows"></tbody></table></div></div></section>
@@ -98,7 +118,45 @@ $('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase
 $('repairForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);const f=e.target;await save('reparations',{...formJSON(f,['vehicule_id','date_reparation','garage','numero_facture','travaux']),kilometrage:num(f,'kilometrage'),montant_fcfa:num(f,'montant_fcfa')},f)};
 $('oilForm').onsubmit=async e=>{e.preventDefault();const f=e.target,v=vehicles.find(x=>String(x.id)===val(f,'vehicule_id')),km=num(f,'kilometrage');if(!v)return msg('Sélectionnez un véhicule.',true);if(km>vehicleKm(v))return msg('Le kilométrage de vidange dépasse le kilométrage enregistré du véhicule.',true);if(!confirm('Confirmer la vidange réellement effectuée ?'))return;const payload={...formJSON(f,['vehicule_id','date_vidange','garage','numero_facture']),kilometrage:km,montant_fcfa:num(f,'montant_fcfa')};const ok=await save('vidanges',payload,f);if(ok){const {error}=await sb.from('vehicules').update({kilometrage_derniere_vidange:km}).eq('id',v.id);if(error)displayError(error,'Vidange enregistrée, mais mise à jour du véhicule impossible');else await load()}};
 $('permissionForm').onsubmit=async e=>{e.preventDefault();if(!profile?.administrateur_principal)return msg('Réservé à l’administrateur principal.',true);const f=e.target,payload={utilisateur_id:val(f,'utilisateur_id'),permission:val(f,'permission'),autorise:val(f,'autorise')==='true'};try{const {error}=await sb.from('autorisations').upsert(payload,{onConflict:'utilisateur_id,permission'});if(error)throw error;msg('Autorisation enregistrée.')}catch(err){displayError(err,'Impossible d’enregistrer la permission')}};
-async function render(s){session=s;$('login').hidden=!!s;$('app').hidden=!s;if(!s)return;const {data,error}=await sb.from('profils').select('*').eq('id',s.user.id).maybeSingle();if(error||!data?.actif){$('app').hidden=true;$('login').hidden=false;$('loginMsg').textContent='Profil inactif ou inaccessible : '+(error?.message||'contactez l’administrateur');await sb.auth.signOut();return}profile=data;profile.permissions=[];if(!data.administrateur_principal){const {data:grants,error:grantsError}=await sb.from('autorisations').select('permission,autorise').eq('utilisateur_id',s.user.id);if(grantsError)displayError(grantsError,'Lecture des permissions');else profile.permissions=(grants||[]).filter(x=>x.autorise).map(x=>x.permission)}$('who').textContent=s.user.email;$('role').textContent=data.administrateur_principal?'Administrateur principal':'Utilisateur autorisé';$('users').querySelector('form').hidden=!data.administrateur_principal;await load()}
+
+// AJOUT : Gestion du changement de mot de passe
+$('btnUpdatePassword').onclick = async () => {
+    const newPassword = $('newPassword').value;
+    const msgEl = $('pwdMessage');
+    
+    if (!newPassword || newPassword.length < 6) {
+        msgEl.style.color = '#a32727';
+        msgEl.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
+        return;
+    }
+
+    $('btnUpdatePassword').disabled = true;
+    $('btnUpdatePassword').textContent = "Enregistrement...";
+    msgEl.textContent = "";
+
+    try {
+        const { data, error } = await sb.auth.updateUser({ password: newPassword });
+        if (error) {
+            msgEl.style.color = '#a32727';
+            msgEl.textContent = "Erreur : " + error.message;
+        } else {
+            msgEl.style.color = '#117246';
+            msgEl.textContent = "✅ Mot de passe modifié avec succès !";
+            $('newPassword').value = "";
+        }
+    } catch (err) {
+        msgEl.style.color = '#a32727';
+        msgEl.textContent = "Erreur inattendue : " + err.message;
+    } finally {
+        $('btnUpdatePassword').disabled = false;
+        $('btnUpdatePassword').textContent = "Mettre à jour le mot de passe";
+    }
+};
+
+async function render(s){session=s;$('login').hidden=!!s;$('app').hidden=!s;if(!s)return;const {data,error}=await sb.from('profils').select('*').eq('id',s.user.id).maybeSingle();if(error||!data?.actif){$('app').hidden=true;$('login').hidden=false;$('loginMsg').textContent='Profil inactif ou inaccessible : '+(error?.message||'contactez l’administrateur');await sb.auth.signOut();return}profile=data;profile.permissions=[];if(!data.administrateur_principal){const {data:grants,error:grantsError}=await sb.from('autorisations').select('permission,autorise').eq('utilisateur_id',s.user.id);if(grantsError)displayError(grantsError,'Lecture des permissions');else profile.permissions=(grants||[]).filter(x=>x.autorise).map(x=>x.permission)}$('who').textContent=s.user.email;
+// Mise à jour du champ email dans le formulaire de mot de passe
+if($('currentEmail')) $('currentEmail').textContent = s.user.email;
+$('role').textContent=data.administrateur_principal?'Administrateur principal':'Utilisateur autorisé';$('users').querySelector('form').hidden=!data.administrateur_principal;await load()}
 $('loginForm').onsubmit=async e=>{e.preventDefault();if(!sb)return;$('loginBtn').disabled=true;$('loginMsg').textContent='Connexion en cours…';const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;if(error){$('loginMsg').textContent=errText(error);return}$('password').value='';$('loginMsg').textContent='';await render(data.session)};
 $('logout').onclick=async()=>{await sb.auth.signOut();profile=null;await render(null)};
 $('reload').onclick=load;
