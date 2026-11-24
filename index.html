@@ -10,9 +10,19 @@ label{display:block;font-weight:600;margin:12px 0 5px}input,select,textarea{widt
 button{font:inherit;border:0;border-radius:8px;background:#145c9c;color:white;padding:10px 15px;cursor:pointer;margin:3px 3px 3px 0}button.secondary{background:#e5eef8;color:#153b66}button.danger{background:#8e2931}button:disabled{opacity:.6;cursor:wait}
 nav{display:flex;gap:6px;flex-wrap:wrap;margin:15px 0}nav button{background:#e3eaf4;color:#193b60}nav button.active{background:#145c9c;color:white}
 [hidden]{display:none!important}.muted{color:#61748a}.error{color:#a32727}.success{color:#117246}.banner{background:#fff8e5;border-left:4px solid #c18b19;padding:12px;border-radius:6px;margin:12px 0}
-.q{padding:12px;border-bottom:1px solid #e2e9f2}.q label{margin:0 0 8px}.q select{max-width:240px}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:630px}th,td{padding:11px;text-align:left;border-bottom:1px solid #e2e8f0}th{background:#edf3fa}.stat{padding:15px;background:#eef5fd;border-radius:10px}.stat b{font-size:1.8rem;display:block}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:630px}th,td{padding:11px;text-align:left;border-bottom:1px solid #e2e8f0}th{background:#edf3fa}.stat{padding:15px;background:#eef5fd;border-radius:10px}.stat b{font-size:1.8rem;display:block}
 #login{max-width:470px;margin:45px auto}.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.pill{font-size:12px;padding:4px 8px;border-radius:15px;background:#e8f0fb}
 footer{padding:22px;color:#667b8f;text-align:center}
+
+/* NOUVEAUX STYLES POUR LE QUESTIONNAIRE */
+.questionnaire-section { margin-top: 25px; }
+.question-group { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+.question-group h3 { margin-top: 0; margin-bottom: 15px; color: #145c9c; font-size: 1.1rem; border-bottom: 2px solid #dce4ef; padding-bottom: 8px; }
+.q-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 10px 0; border-bottom: 1px dashed #e2e8f0; }
+.q-row:last-child { border-bottom: none; }
+.q-row label { margin: 0; font-weight: 500; flex: 1; }
+.q-row select { max-width: 180px; }
+.q-detail { margin-top: 10px; width: 100%; }
 </style></head><body>
 <header><h1>ADKOUL — Contrôle et maintenance des véhicules</h1><p>Application indépendante • Gestion sécurisée par Supabase</p></header>
 <main>
@@ -50,7 +60,8 @@ footer{padding:22px;color:#667b8f;text-align:center}
 <div><label>Date et heure *</label><input name="date_controle" type="datetime-local" required></div>
 <div><label>Kilométrage relevé *</label><input name="kilometrage" type="number" min="0" step="1" required></div>
 <div><label>Carburant (litres)</label><input name="carburant_litres" type="number" min="0" step="0.1"></div></div>
-<div id="questions"></div><label>Observations complémentaires</label><textarea name="observations"></textarea>
+<div id="questions" class="questionnaire-section"></div>
+<label>Observations complémentaires</label><textarea name="observations"></textarea>
 <p><button type="submit">Enregistrer le questionnaire</button></p></form></div></section>
 <section id="repairs" class="panel" hidden><div class="card"><h2>Enregistrer une réparation</h2><form id="repairForm">
 <div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_reparation" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Garage</label><input name="garage"></div><div><label>Montant FCFA</label><input name="montant_fcfa" type="number" min="0"></div><div><label>N° facture</label><input name="numero_facture"></div></div>
@@ -82,7 +93,50 @@ function cell(tr,t){const td=document.createElement('td');td.textContent=t==null
 function hasPermission(p){return profile?.administrateur_principal===true || (profile?.permissions||[]).includes(p)}
 function activate(tab){document.querySelectorAll('.panel').forEach(x=>x.hidden=x.id!==tab);document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab))}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>activate(b.dataset.tab));
-for(const [group,items] of Object.entries(GROUPS)){const h=document.createElement('h3');h.textContent=group;$('questions').append(h);items.forEach(q=>{const div=document.createElement('div');div.className='q';const l=document.createElement('label');l.textContent=q;const s=document.createElement('select');s.dataset.question=q;s.required=true;s.append(opt(''));[['oui','Oui'],['non','Non'],['na','Non applicable']].forEach(([v,t])=>{const o=opt(t);o.value=v;s.append(o)});const detail=document.createElement('textarea');detail.placeholder='Précisez le défaut constaté';detail.hidden=true;s.onchange=()=>{detail.hidden=s.value!=='non';detail.required=s.value==='non'};div.append(l,s,detail);$('questions').append(div)})}
+
+// GÉNÉRATION DU QUESTIONNAIRE AVEC LE NOUVEAU STYLE
+for(const [group,items] of Object.entries(GROUPS)){
+    const section = document.createElement('div');
+    section.className = 'question-group';
+    const h = document.createElement('h3');
+    h.textContent = group;
+    section.append(h);
+    
+    items.forEach(q => {
+        const row = document.createElement('div');
+        row.className = 'q-row';
+        
+        const l = document.createElement('label');
+        l.textContent = q;
+        
+        const select = document.createElement('select');
+        select.dataset.question = q;
+        select.required = true;
+        
+        select.append(opt('')); // Option vide par défaut
+        [['oui','Oui'],['non','Non'],['na','N/A']].forEach(([v,t]) => {
+            const o = opt(t);
+            o.value = v;
+            select.append(o);
+        });
+        
+        const detail = document.createElement('textarea');
+        detail.className = 'q-detail';
+        detail.placeholder = 'Précisez le défaut constaté...';
+        detail.hidden = true;
+        
+        select.onchange = () => {
+            detail.hidden = select.value !== 'non';
+            detail.required = select.value === 'non';
+            if(!detail.hidden) detail.focus();
+        };
+        
+        row.append(l, select);
+        section.append(row, detail); // La zone de détail se place sous la ligne
+    });
+    $('questions').append(section);
+}
+
 function formJSON(form,keys){const out={};for(const k of keys){const v=val(form,k);out[k]=v||null}return out}
 async function readTable(table){const {data,error}=await sb.from(table).select('*').limit(500);if(error)throw error;return data||[]}
 async function load(){if(!session)return;msg('Chargement des données…');try{
@@ -104,7 +158,7 @@ async function loadUsers(){const root=$('userList'),select=$('permissionUser');r
 $('permissionName').replaceChildren();PERMS.forEach(p=>{const o=opt(p);o.value=p;$('permissionName').append(o)});
 async function save(table,payload,form,editId=null){try{let q=editId?sb.from(table).update(payload).eq('id',editId):sb.from(table).insert(payload);const {error}=await q;if(error)throw error;msg('Enregistrement confirmé dans Supabase : '+table+'.');if(form){form.reset();delete form.dataset.editId}await load();return true}catch(e){displayError(e,'Échec de l’enregistrement dans '+table);return false}}
 $('vehicleForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_vehicules'))return msg('Permission gérer les véhicules non accordée.',true);const f=e.target,km=num(f,'kilometrage_actuel'),oil=num(f,'kilometrage_derniere_vidange');if(oil!=null&&oil>km)return msg('Dernière vidange supérieure au kilométrage actuel.',true);await save('vehicules',{immatriculation:val(f,'immatriculation').toUpperCase(),modele:val(f,'modele'),kilometrage_actuel:km,kilometrage_derniere_vidange:oil},f,f.dataset.editId)};
-$('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase=val(f,'phase');if(!hasPermission(phase==='depart'?'controle_depart':'controle_retour'))return msg('Permission de contrôle non accordée.',true);const reponses=[];for(const s of document.querySelectorAll('[data-question]')){if(!s.value)return msg('Répondez à toutes les questions.',true);const detail=s.nextElementSibling;if(s.value==='non'&&!detail.value.trim())return msg('Décrivez le défaut : '+s.dataset.question,true);reponses.push({question:s.dataset.question,reponse:s.value,defaut:s.value==='non'?detail.value.trim():''})}const payload={...formJSON(f,['vehicule_id','phase','conducteur','reference_mission','observations']),date_controle:new Date(val(f,'date_controle')).toISOString(),kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),reponses};await save('controles',payload,f)};
+$('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase=val(f,'phase');if(!hasPermission(phase==='depart'?'controle_depart':'controle_retour'))return msg('Permission de contrôle non accordée.',true);const reponses=[];for(const s of document.querySelectorAll('[data-question]')){if(!s.value)return msg('Répondez à toutes les questions.',true);const detail=s.parentElement.nextElementSibling; if(s.value==='non'&&(!detail.value||!detail.value.trim()))return msg('Décrivez le défaut : '+s.dataset.question,true);reponses.push({question:s.dataset.question,reponse:s.value,defaut:s.value==='non'?detail.value.trim():''})}const payload={...formJSON(f,['vehicule_id','phase','conducteur','reference_mission','observations']),date_controle:new Date(val(f,'date_controle')).toISOString(),kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),reponses};await save('controles',payload,f)};
 $('repairForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);const f=e.target;await save('reparations',{...formJSON(f,['vehicule_id','date_reparation','garage','numero_facture','travaux']),kilometrage:num(f,'kilometrage'),montant_fcfa:num(f,'montant_fcfa')},f)};
 $('oilForm').onsubmit=async e=>{e.preventDefault();const f=e.target,v=vehicles.find(x=>String(x.id)===val(f,'vehicule_id')),km=num(f,'kilometrage');if(!v)return msg('Sélectionnez un véhicule.',true);if(km>vehicleKm(v))return msg('Le kilométrage de vidange dépasse le kilométrage enregistré du véhicule.',true);if(!confirm('Confirmer la vidange réellement effectuée ?'))return;const payload={...formJSON(f,['vehicule_id','date_vidange','garage','numero_facture']),kilometrage:km,montant_fcfa:num(f,'montant_fcfa')};const ok=await save('vidanges',payload,f);if(ok){const {error}=await sb.from('vehicules').update({kilometrage_derniere_vidange:km}).eq('id',v.id);if(error)displayError(error,'Vidange enregistrée, mais mise à jour du véhicule impossible');else await load()}};
 $('permissionForm').onsubmit=async e=>{e.preventDefault();if(!profile?.administrateur_principal)return msg('Réservé à l’administrateur principal.',true);const f=e.target,payload={utilisateur_id:val(f,'utilisateur_id'),permission:val(f,'permission'),autorise:val(f,'autorise')==='true'};try{const {error}=await sb.from('autorisations').upsert(payload,{onConflict:'utilisateur_id,permission'});if(error)throw error;msg('Autorisation enregistrée.')}catch(err){displayError(err,'Impossible d’enregistrer la permission')}};
