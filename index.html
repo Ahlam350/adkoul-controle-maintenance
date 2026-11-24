@@ -49,6 +49,23 @@ body>*:not(main){display:none!important}main>*{display:none!important}main{max-w
 #recordDetail{display:block!important;border:0;box-shadow:none;padding:0;margin:0;max-width:none}
 #recordDetail .no-print{display:none!important}.print-only{display:block!important}
 .detail-question{padding:7px 0}table{min-width:0!important}th,td{padding:6px;border-bottom:1px solid #ddd}}
+
+/* ADKOUL V1.4 — questionnaire professionnel et scans */
+.question-section{box-shadow:0 5px 20px rgba(12,47,79,.045);border-color:#d4e2ee}
+.question-section h3{background:linear-gradient(95deg,#10345b,#176378);color:#fff;padding:16px 20px;font-weight:750;letter-spacing:.1px}
+.q{grid-template-columns:minmax(220px,1fr) minmax(210px,265px);border-left:4px solid transparent;transition:background .15s}
+.q:hover{background:#eef8fb}.q label{font-size:.96rem;color:#173953}
+.q select{border-radius:11px;font-weight:650;background:#f8fbff}
+.q[data-status=oui]{background:#f1fbf6}.q[data-status=non]{background:#fff5f2}.q[data-status=na]{background:#f7f8fa}
+.question-summary{margin:16px 0;padding:14px 18px;background:#e9f3f8;border:1px solid #d5e5f0;border-radius:12px;font-weight:650;color:#194a65}
+.question-legend span{background:#fff;border:1px solid #dce6f0;border-radius:999px;padding:7px 13px}
+.upload-box{margin:20px 0;padding:20px;border:2px dashed #95b6c8;border-radius:14px;background:#f4fafc}
+.upload-box label{font-size:1rem;color:#10345b;margin:0 0 8px}.upload-box small{display:block;margin-top:8px}
+.file-link{display:inline-flex;align-items:center;gap:5px}
+.history-actions{min-width:205px}
+#recordDetail .detail-header{padding-bottom:12px;border-bottom:3px solid #0d8d94}
+@media(max-width:720px){.q{grid-template-columns:1fr}.upload-box{padding:14px}}
+@media print{.upload-box,.question-summary{display:none!important}}
 </style></head><body>
 <header><h1>ADKOUL — Contrôle et maintenance des véhicules</h1><p>Application indépendante • Gestion sécurisée par Supabase</p></header>
 <main>
@@ -77,18 +94,19 @@ body>*:not(main){display:none!important}main>*{display:none!important}main{max-w
 <div><label>Date et heure *</label><input name="date_controle" type="datetime-local" required></div>
 <div><label>Kilométrage relevé *</label><input name="kilometrage" type="number" min="0" step="1" required></div>
 <div><label>Carburant (litres) *</label><input name="carburant_litres" type="number" min="0" step="0.1" required></div></div>
-<div class="question-intro"><div><strong>Liste de vérification</strong><p class="muted">Répondez à chaque point. Pour une réponse « Non », décrivez le défaut constaté.</p></div><div class="progress-text" id="questionProgress" aria-live="polite">0 / 0 complété</div></div><div class="progress-track"><div id="progressBar"></div></div><div class="question-legend"><span class="legend-good">● Oui : conforme</span><span class="legend-bad">● Non : anomalie</span><span class="legend-na">● N/A : non applicable</span></div><div id="questions"></div><label>Observations complémentaires</label><textarea name="observations"></textarea>
+<div class="question-intro"><div><strong>Liste de vérification</strong><p class="muted">Répondez à chaque point. Pour une réponse « Non », décrivez le défaut constaté.</p></div><div class="progress-text" id="questionProgress" aria-live="polite">0 / 0 complété</div></div><div class="progress-track"><div id="progressBar"></div></div><div class="question-legend"><span class="legend-good">● Oui : conforme</span><span class="legend-bad">● Non : anomalie</span><span class="legend-na">● N/A : non applicable</span></div><div id="questionSummary" class="question-summary" aria-live="polite">Aucune réponse renseignée pour le moment.</div><div id="questions"></div><label>Observations complémentaires</label><textarea name="observations"></textarea>
 <p><button type="submit">Enregistrer le questionnaire</button></p></form></div></section>
 <section id="repairs" class="panel" hidden><div class="card"><h2>Enregistrer une réparation</h2><form id="repairForm">
 <div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_reparation" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Garage</label><input name="garage"></div><div><label>Montant FCFA</label><input name="montant_fcfa" type="number" min="0"></div><div><label>N° facture</label><input name="numero_facture"></div></div>
-<label>Travaux effectués *</label><textarea name="travaux" required></textarea><button type="submit">Enregistrer la réparation</button></form><p class="muted">Les références de facture sont enregistrées ici. Le téléversement du fichier facture dans Supabase Storage nécessite une configuration distincte.</p></div></section>
+<div class="upload-box"><label for="factureScan">📎 Joindre le scan de la facture (facultatif)</label><input id="factureScan" name="facture_scan" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"><small class="muted">PDF, JPG ou PNG • 10 Mo maximum • stockage privé. Le scan est lié à la réparation enregistrée.</small></div>
+<label>Travaux effectués *</label><textarea name="travaux" required></textarea><button type="submit">Enregistrer la réparation</button></form><p class="muted">Les factures sont stockées dans le bucket privé factures-reparations. Seuls les utilisateurs autorisés peuvent les consulter.</p></div></section>
 <section id="oil" class="panel" hidden><div class="card"><h2>Enregistrer une vidange</h2><form id="oilForm">
 <div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_vidange" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Intervalle (km)</label><input name="intervalle_km" type="number" min="1" value="3000" required></div></div><label>Observations</label><textarea name="observations"></textarea><button type="submit">Confirmer la vidange effectuée</button></form></div></section>
 <section id="history" class="panel" hidden><div class="card"><h2>Historique des opérations</h2><div id="historyTables"></div></div></section>
 <section id="users" class="panel" hidden><div class="card"><h2>Utilisateurs et permissions</h2><p class="muted">Les comptes d'authentification doivent être créés dans Supabase Auth ou par un service serveur sécurisé. Ne jamais intégrer une clé secrète d'administration dans cette page.</p><div id="userList"></div>
 <h3>Attribuer une permission à un utilisateur existant</h3><form id="permissionForm"><div class="grid"><div><label>Profil *</label><select id="permissionUser" name="utilisateur_id" required></select></div><div><label>Permission *</label><select id="permissionName" name="permission" required></select></div><div><label>Décision</label><select name="autorise"><option value="true">Autoriser</option><option value="false">Refuser</option></select></div></div><button type="submit">Enregistrer la permission</button></form>
 <p class="muted">Cette opération dépend des politiques RLS de la table <code>autorisations</code>. Les profils non administrateurs ne doivent pas pouvoir s'accorder eux-mêmes des droits.</p></div></section>
-</div><section id="recordDetail" hidden aria-label="Fiche détaillée imprimable"><div class="detail-header"><h2 id="detailTitle">Fiche de contrôle</h2><div class="no-print"><button type="button" id="printDetail">Imprimer / PDF</button><button type="button" id="closeDetail" class="secondary">Fermer</button></div></div><p class="print-only">ADKOUL — Contrôle et maintenance des véhicules</p><div id="detailBody"></div><p class="muted">Document généré depuis les informations enregistrées dans Supabase. Les champs non renseignés sont indiqués comme tels.</p></section></main><footer>ADKOUL • Application indépendante • Version 1.2 — interface harmonisée et questionnaire amélioré</footer>
+</div><section id="recordDetail" hidden aria-label="Fiche détaillée imprimable"><div class="detail-header"><h2 id="detailTitle">Fiche de contrôle</h2><div class="no-print"><button type="button" id="printDetail">Imprimer / PDF</button><button type="button" id="closeDetail" class="secondary">Fermer</button></div></div><p class="print-only">ADKOUL — Contrôle et maintenance des véhicules</p><div id="detailBody"></div><p class="muted">Document généré depuis les informations enregistrées dans Supabase. Les champs non renseignés sont indiqués comme tels.</p></section></main><footer>ADKOUL • Application indépendante • Version 1.4 — formulaires, scans privés et impression</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 'use strict';
@@ -97,6 +115,7 @@ const KEY_SB='sb_publishable_h7UaZIuqwvOb1EsS5f57aQ_Q77-u9qM';
 const $=id=>document.getElementById(id);
 const sb=window.supabase?.createClient(URL_SB,KEY_SB,{auth:{persistSession:true,autoRefreshToken:true}});
 let session=null, profile=null, vehicles=[], histories={}, userProfiles=[];
+const FACTURE_BUCKET='factures-reparations';
 const PERMS=['consulter','consulter_factures','controle_depart','controle_retour','exporter_rapports','gerer_reparations','gerer_utilisateurs','gerer_vehicules'];
 const GROUPS={'Moteur et mécanique':['Démarrage normal','Absence de fuite','Niveau huile correct','Liquide de refroidissement correct','Absence de bruit anormal','Absence de bruit anormal de distribution / arbres à cames','Courroies et distribution sans anomalie visible'],'Suspension, direction et transmission':['Amortisseurs avant sans fuite ni bruit','Amortisseurs arrière sans fuite ni bruit','Ressorts de suspension sans casse visible','Arbres de transmission sans jeu ni bruit anormal','Croisillons de transmission sans jeu ni bruit','Rotules et biellettes de direction sans jeu apparent','Silentblocs de suspension sans détérioration visible','Roulements de roues sans bruit anormal','Direction sans vibration ni jeu excessif'],'Pneus et freins':['Pneus en bon état','Roue de secours disponible','Freins efficaces','Frein à main efficace'],'Éclairage et sécurité':['Phares fonctionnels','Clignotants fonctionnels','Feux stop fonctionnels','Ceintures fonctionnelles','Extincteur disponible','Triangle de signalisation disponible'],'Carrosserie et équipements':['Pare-brise intact','Rétroviseurs intacts','Carrosserie sans nouveau dommage','Cric et outils présents'],'Documents':['Carte grise disponible','Assurance valide','Documents obligatoires à jour']};
 function msg(t,bad=false){$('notice').textContent=t;$('notice').className=bad?'error':'success';}
@@ -110,7 +129,7 @@ function hasPermission(p){return profile?.administrateur_principal===true || (pr
 function activate(tab){$('recordDetail').hidden=true;document.querySelectorAll('.panel').forEach(x=>x.hidden=x.id!==tab);document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab))}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>activate(b.dataset.tab));
 for(const [group,items] of Object.entries(GROUPS)){const section=document.createElement('section');section.className='question-section';const h=document.createElement('h3');h.textContent=group;section.append(h);items.forEach((q,index)=>{const div=document.createElement('div');div.className='q';const l=document.createElement('label');l.textContent=(index+1)+'. '+q;const s=document.createElement('select');s.dataset.question=q;s.required=true;s.setAttribute('aria-label',q);s.append(opt(''));[['oui','Oui'],['non','Non'],['na','Non applicable']].forEach(([v,t])=>{const o=opt(t);o.value=v;s.append(o)});const detail=document.createElement('textarea');detail.placeholder='Précisez le défaut constaté';detail.hidden=true;s.onchange=()=>{detail.hidden=s.value!=='non';detail.required=s.value==='non';div.dataset.status=s.value;updateQuestionProgress()};div.append(l,s,detail);section.append(div)});$('questions').append(section)}updateQuestionProgress();
-function updateQuestionProgress(){const all=[...document.querySelectorAll('[data-question]')];const done=all.filter(s=>s.value).length;const pct=all.length?Math.round(done*100/all.length):0;$('questionProgress').textContent=done+' / '+all.length+' complété'+(done>1?'s':'');$('progressBar').style.width=pct+'%'}
+function updateQuestionProgress(){const all=[...document.querySelectorAll('[data-question]')];const done=all.filter(s=>s.value).length;const pct=all.length?Math.round(done*100/all.length):0;$('questionProgress').textContent=done+' / '+all.length+' complété'+(done>1?'s':'');$('progressBar').style.width=pct+'%';const counts={oui:0,non:0,na:0};all.forEach(x=>{if(x.value in counts)counts[x.value]++});$('questionSummary').textContent='✔ '+counts.oui+' conformes   •   ⚠ '+counts.non+' anomalies   •   — '+counts.na+' non applicables'}
 $('inspectionForm').addEventListener('reset',()=>setTimeout(()=>{document.querySelectorAll('.q').forEach(q=>{delete q.dataset.status;const d=q.querySelector('textarea');if(d){d.hidden=true;d.required=false}});updateQuestionProgress()},0));
 function formJSON(form,keys){const out={};for(const k of keys){const v=val(form,k);out[k]=v||null}return out}
 async function readTable(table){const {data,error}=await sb.from(table).select('*').limit(500);if(error)throw error;return data||[]}
@@ -132,6 +151,40 @@ function labelVehicle(id){const v=vehicles.find(x=>String(x.id)===String(id));re
 function dateFR(v){if(!v)return 'Non renseigné';const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}
 function readable(v){return v===null||v===undefined||v===''?'Non renseigné':String(v)}
 function detailLine(root,k,v){const tr=document.createElement('tr');cell(tr,k);cell(tr,readable(v));root.append(tr)}
+function factureAllowed(){return hasPermission('consulter_factures')}
+function validateScan(file){
+ if(!file)return;
+ if(!['application/pdf','image/jpeg','image/png'].includes(file.type))throw new Error('Format refusé : sélectionnez PDF, JPG ou PNG.');
+ if(file.size>10*1024*1024)throw new Error('Fichier trop volumineux (maximum 10 Mo).');
+ if(file.size===0)throw new Error('Le fichier sélectionné est vide.');
+}
+async function uploadRepairScan(repairId,file){
+ validateScan(file);
+ const ext={'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png'}[file.type];
+ const unique=crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
+ const path='reparations/'+String(repairId)+'/'+unique+'.'+ext;
+ const {error:upErr}=await sb.storage.from(FACTURE_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+ if(upErr)throw new Error('Envoi du scan : '+errText(upErr));
+ const {error:dbErr}=await sb.from('reparations').update({chemin_facture:path}).eq('id',repairId);
+ if(dbErr){
+   if(profile?.administrateur_principal){const {error:cleanup}=await sb.storage.from(FACTURE_BUCKET).remove([path]);if(cleanup)console.warn('Fichier à nettoyer : '+path,cleanup)}
+   throw new Error('Scan transmis mais association impossible : '+errText(dbErr)+' ; chemin du scan : '+path);
+ }
+ return path;
+}
+async function openRepairScan(path){
+ if(!factureAllowed())return msg('Vous ne disposez pas de la permission consulter_factures.',true);
+ if(!path)return msg('Aucun scan associé à cette réparation.',true);
+ // La fenêtre doit être ouverte dans le geste utilisateur pour éviter les bloqueurs.
+ const win=window.open('about:blank','_blank');
+ if(win){win.document.title='Chargement de la facture ADKOUL';win.document.body.textContent='Ouverture sécurisée de la facture…'}
+ try{
+  const {data,error}=await sb.storage.from(FACTURE_BUCKET).createSignedUrl(path,60);
+  if(error||!data?.signedUrl)throw error||new Error('URL temporaire indisponible');
+  if(win)win.location.replace(data.signedUrl);
+  else {const a=document.createElement('a');a.href=data.signedUrl;a.target='_blank';a.rel='noopener noreferrer';a.click()}
+ }catch(e){if(win)win.close();displayError(e,'Impossible de consulter le scan')}
+}
 function showRecord(table,r){
  const box=$('recordDetail'),body=$('detailBody');body.replaceChildren();
  const labels={controles:'Fiche de contrôle',reparations:'Fiche de réparation',vidanges:'Fiche de vidange'};
@@ -154,7 +207,7 @@ function showRecord(table,r){
    detailLine(tbody,'Date',dateFR(table==='reparations'?r.date_reparation:r.date_vidange));
    detailLine(tbody,'Date d’enregistrement',dateFR(r.cree_le));
    if(table==='reparations'){
-     detailLine(tbody,'Description des travaux',r.description);detailLine(tbody,'Garage',r.garage);detailLine(tbody,'Coût',r.cout==null?null:r.cout+' FCFA');detailLine(tbody,'Numéro de facture',r.numero_facture);detailLine(tbody,'Référence du fichier facture',r.chemin_facture);
+     detailLine(tbody,'Description des travaux',r.description);detailLine(tbody,'Garage',r.garage);detailLine(tbody,'Coût',r.cout==null?null:r.cout+' FCFA');detailLine(tbody,'Numéro de facture',r.numero_facture);detailLine(tbody,'Référence du fichier facture',r.chemin_facture);if(r.chemin_facture&&factureAllowed()){const b=document.createElement('button');b.type='button';b.className='secondary no-print';b.textContent='📎 Ouvrir le scan de facture';b.onclick=()=>openRepairScan(r.chemin_facture);body.append(b)}
    }else{detailLine(tbody,'Kilométrage',r.kilometrage==null?null:r.kilometrage+' km');detailLine(tbody,'Intervalle de vidange',r.intervalle_km==null?null:r.intervalle_km+' km');detailLine(tbody,'Observations',r.observations)}
    t.append(tbody);body.append(t);
  }
@@ -178,7 +231,18 @@ function renderHistory(){
    cell(tr,dateFR(table==='controles'?r.cree_le:table==='reparations'?r.date_reparation:r.date_vidange));
    cell(tr,r.kilometrage==null?'—':r.kilometrage+' km');const td=cell(tr,'');td.className='history-actions';
    const view=document.createElement('button');view.type='button';view.textContent='Consulter';view.className='secondary';view.onclick=()=>showRecord(table,r);td.append(view);
-   const print=document.createElement('button');print.type='button';print.textContent='Imprimer';print.onclick=()=>{showRecord(table,r);window.print()};td.append(print);tbody.append(tr)
+   const print=document.createElement('button');print.type='button';print.textContent='Imprimer';print.onclick=()=>{showRecord(table,r);window.print()};td.append(print);
+   if(table==='reparations'){
+     if(r.chemin_facture&&factureAllowed()){const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent='📎 Voir le scan';b.onclick=()=>openRepairScan(r.chemin_facture);td.append(b)}
+     if(!r.chemin_facture&&hasPermission('gerer_reparations')){
+       const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent='📎 Ajouter un scan';b.onclick=()=>{
+         const input=document.createElement('input');input.type='file';input.accept='.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png';
+         input.onchange=async()=>{const file=input.files?.[0];if(!file)return;b.disabled=true;try{await uploadRepairScan(r.id,file);msg('Scan associé à la réparation n° '+r.id);await load()}catch(e){displayError(e,'Impossible de joindre le scan')}finally{b.disabled=false}};
+         input.click();
+       };td.append(b)
+     }
+   }
+   tbody.append(tr)
   });t.append(tbody);wrap.append(t);root.append(wrap)
  }
 }
@@ -187,7 +251,25 @@ $('permissionName').replaceChildren();PERMS.forEach(p=>{const o=opt(p);o.value=p
 async function save(table,payload,form,editId=null){try{let q=editId?sb.from(table).update(payload).eq('id',editId):sb.from(table).insert(payload);const {error}=await q;if(error)throw error;msg('Enregistrement confirmé dans Supabase : '+table+'.');if(form){form.reset();delete form.dataset.editId}await load();return true}catch(e){displayError(e,'Échec de l’enregistrement dans '+table);return false}}
 $('vehicleForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_vehicules'))return msg('Permission gérer les véhicules non accordée.',true);const f=e.target,km=num(f,'kilometrage_actuel'),oil=num(f,'kilometrage_derniere_vidange');if(oil!=null&&oil>km)return msg('Dernière vidange supérieure au kilométrage actuel.',true);await save('vehicules',{immatriculation:val(f,'immatriculation').toUpperCase(),marque_modele:val(f,'marque_modele'),kilometrage_actuel:km,kilometrage_derniere_vidange:oil},f,f.dataset.editId)};
 $('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase=val(f,'phase');if(!hasPermission(phase==='depart'?'controle_depart':'controle_retour'))return msg('Permission de contrôle non accordée.',true);const reponses=[];for(const s of document.querySelectorAll('[data-question]')){if(!s.value)return msg('Répondez à toutes les questions.',true);const detail=s.nextElementSibling;if(s.value==='non'&&!detail.value.trim())return msg('Décrivez le défaut : '+s.dataset.question,true);reponses.push({question:s.dataset.question,reponse:s.value,defaut:s.value==='non'?detail.value.trim():''})}const dateSaisie=val(f,'date_controle');if(!dateSaisie||Number.isNaN(new Date(dateSaisie).getTime()))return msg('Date de contrôle invalide.',true);const questionnaire={version:1,chauffeur_nom:val(f,'conducteur'),reference_mission:val(f,'reference_mission')||null,date_controle:new Date(dateSaisie).toISOString(),reponses};const payload={vehicule_id:Number(val(f,'vehicule_id')),type_controle:phase.toUpperCase(),kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),questionnaire,observations:val(f,'observations')||null};await save('controles',payload,f)};
-$('repairForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);const f=e.target;await save('reparations',{vehicule_id:Number(val(f,'vehicule_id')),date_reparation:val(f,'date_reparation'),garage:val(f,'garage')||null,numero_facture:val(f,'numero_facture')||null,description:val(f,'travaux'),cout:num(f,'montant_fcfa')},f)};
+$('repairForm').onsubmit=async e=>{
+ e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);
+ const f=e.target,btn=f.querySelector('button[type=submit]'),file=$('factureScan').files?.[0]||null;
+ try{validateScan(file)}catch(e){return displayError(e,'Facture invalide')}
+ btn.disabled=true;
+ try{
+  const payload={vehicule_id:Number(val(f,'vehicule_id')),date_reparation:val(f,'date_reparation'),garage:val(f,'garage')||null,numero_facture:val(f,'numero_facture')||null,description:val(f,'travaux'),cout:num(f,'montant_fcfa')};
+  const {data,error}=await sb.from('reparations').insert(payload).select('id').single();
+  if(error)throw error;
+  if(file){
+    try{await uploadRepairScan(data.id,file)}catch(uploadError){
+      msg('Réparation n° '+data.id+' enregistrée, mais scan non associé : '+errText(uploadError)+'. Utilisez « Ajouter un scan » dans Historique pour réessayer.',true);
+      await load();return;
+    }
+  }
+  f.reset();await load();msg('Réparation n° '+data.id+' enregistrée'+(file?' avec son scan privé.':'.'));
+ }catch(e){displayError(e,'Enregistrement de la réparation impossible')}
+ finally{btn.disabled=false}
+};
 $('oilForm').onsubmit=async e=>{e.preventDefault();const f=e.target,v=vehicles.find(x=>String(x.id)===val(f,'vehicule_id')),km=num(f,'kilometrage');if(!v)return msg('Sélectionnez un véhicule.',true);if(km>vehicleKm(v))return msg('Le kilométrage de vidange dépasse le kilométrage enregistré du véhicule.',true);if(!confirm('Confirmer la vidange réellement effectuée ?'))return;const payload={vehicule_id:Number(val(f,'vehicule_id')),date_vidange:val(f,'date_vidange'),kilometrage:km,intervalle_km:num(f,'intervalle_km'),observations:val(f,'observations')||null};const ok=await save('vidanges',payload,f);if(ok){const {error}=await sb.from('vehicules').update({kilometrage_derniere_vidange:km}).eq('id',v.id);if(error)displayError(error,'Vidange enregistrée, mais mise à jour du véhicule impossible');else await load()}};
 $('permissionForm').onsubmit=async e=>{e.preventDefault();if(!profile?.administrateur_principal)return msg('Réservé à l’administrateur principal.',true);const f=e.target,payload={utilisateur_id:val(f,'utilisateur_id'),permission:val(f,'permission'),autorise:val(f,'autorise')==='true'};try{const {error}=await sb.from('autorisations').upsert(payload,{onConflict:'utilisateur_id,permission'});if(error)throw error;msg('Autorisation enregistrée.')}catch(err){displayError(err,'Impossible d’enregistrer la permission')}};
 async function render(s){session=s;$('login').hidden=!!s;$('app').hidden=!s;if(!s)return;const {data,error}=await sb.from('profils').select('*').eq('id',s.user.id).maybeSingle();if(error||!data?.actif){$('app').hidden=true;$('login').hidden=false;$('loginMsg').textContent='Profil inactif ou inaccessible : '+(error?.message||'contactez l’administrateur');await sb.auth.signOut();return}profile=data;profile.permissions=[];if(!data.administrateur_principal){const {data:grants,error:grantsError}=await sb.from('autorisations').select('permission,autorise').eq('utilisateur_id',s.user.id);if(grantsError)displayError(grantsError,'Lecture des permissions');else profile.permissions=(grants||[]).filter(x=>x.autorise).map(x=>x.permission)}$('who').textContent=s.user.email;$('role').textContent=data.administrateur_principal?'Administrateur principal':'Utilisateur autorisé';$('users').querySelector('form').hidden=!data.administrateur_principal;await load()}
