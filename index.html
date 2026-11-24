@@ -31,26 +31,16 @@ footer{padding:22px;color:#667b8f;text-align:center}
 <div class="stat">Véhicules<b id="sVehicles">—</b></div><div class="stat">Contrôles<b id="sControls">—</b></div><div class="stat">Réparations<b id="sRepairs">—</b></div><div class="stat">Vidanges<b id="sOil">—</b></div>
 </div>
 <div class="card"><h2>Alertes vidange</h2><p>Échéance calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div>
-
-<!-- AJOUT : Formulaire de changement de mot de passe -->
 <div class="card">
     <h2>Changer mon mot de passe</h2>
     <p class="muted">Vous êtes connecté avec : <strong id="currentEmail"></strong></p>
-    <div class="grid">
-        <div>
-            <label for="newPassword">Nouveau mot de passe *</label>
-            <input type="password" id="newPassword" placeholder="Entrez votre nouveau mot de passe (min 6 caractères)">
-        </div>
-    </div>
-    <p style="margin-top:10px;">
-        <button type="button" id="btnUpdatePassword">Mettre à jour le mot de passe</button>
-    </p>
+    <div class="grid"><div><label for="newPassword">Nouveau mot de passe *</label><input type="password" id="newPassword" placeholder="Entrez votre nouveau mot de passe (min 6 caractères)"></div></div>
+    <p style="margin-top:10px;"><button type="button" id="btnUpdatePassword">Mettre à jour le mot de passe</button></p>
     <p id="pwdMessage" role="status" style="font-weight:bold;"></p>
 </div>
-
 </section>
 <section id="vehicles" class="panel" hidden><div class="card"><h2>Ajouter / modifier un véhicule</h2><form id="vehicleForm">
-<div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="marque_modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div><div><label>Dernière vidange (km)</label><input name="kilometrage_derniere_vidange" type="number" min="0" step="1"></div></div>
+<div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div><div><label>Dernière vidange (km)</label><input name="kilometrage_derniere_vidange" type="number" min="0" step="1"></div></div>
 <button type="submit">Enregistrer le véhicule</button><button type="reset" class="secondary">Effacer</button></form></div><div class="card"><h2>Parc automobile</h2><div class="tablewrap"><table><thead><tr><th>Immatriculation</th><th>Modèle</th><th>Kilométrage</th><th>Vidange à</th><th>Action</th></tr></thead><tbody id="vehiclesRows"></tbody></table></div></div></section>
 <section id="inspection" class="panel" hidden><div class="card"><h2>Questionnaire de contrôle départ / retour</h2><form id="inspectionForm">
 <div class="grid"><div><label>Phase *</label><select name="phase" id="phase"><option value="depart">Avant départ</option><option value="retour">Au retour</option></select></div>
@@ -106,55 +96,31 @@ function vehicleKm(v){return Number(v.kilometrage_actuel??v.kilometrage??0)}
 function vehicleOil(v){return v.kilometrage_derniere_vidange==null?null:Number(v.kilometrage_derniere_vidange)}
 function renderVehicles(){
 const tb=$('vehiclesRows');tb.replaceChildren();document.querySelectorAll('.vehiclePicker').forEach(s=>{s.replaceChildren();s.append(opt('Sélectionnez un véhicule'));s.firstChild.value='';vehicles.forEach(v=>{const o=opt(vehicleName(v));o.value=v.id;s.append(o)})});
-vehicles.forEach(v=>{const tr=document.createElement('tr');cell(tr,vehicleName(v));cell(tr,v.marque_modele||v.modele||'—');cell(tr,vehicleKm(v));cell(tr,vehicleOil(v)==null?'Non renseignée':vehicleOil(v)+3000);const td=cell(tr,'');const b=document.createElement('button');b.className='secondary';b.textContent='Modifier';b.onclick=()=>{const f=$('vehicleForm');for(const k of ['immatriculation','marque_modele','kilometrage_actuel','kilometrage_derniere_vidange'])if(f.elements.namedItem(k))f.elements.namedItem(k).value=v[k]??'';f.dataset.editId=v.id;activate('vehicles');f.scrollIntoView({behavior:'smooth'})};td.append(b);tb.append(tr)});
+vehicles.forEach(v=>{const tr=document.createElement('tr');cell(tr,vehicleName(v));cell(tr,v.modele||v.marque_modele||'—');cell(tr,vehicleKm(v));cell(tr,vehicleOil(v)==null?'Non renseignée':vehicleOil(v)+3000);const td=cell(tr,'');const b=document.createElement('button');b.className='secondary';b.textContent='Modifier';b.onclick=()=>{const f=$('vehicleForm');for(const k of ['immatriculation','modele','kilometrage_actuel','kilometrage_derniere_vidange'])if(f.elements.namedItem(k))f.elements.namedItem(k).value=v[k]??'';f.dataset.editId=v.id;activate('vehicles');f.scrollIntoView({behavior:'smooth'})};td.append(b);tb.append(tr)});
 }
 function renderAlerts(){const root=$('alerts');root.replaceChildren();if(!vehicles.length){root.textContent='Aucun véhicule enregistré.';return}vehicles.forEach(v=>{const p=document.createElement('p'),oil=vehicleOil(v),km=vehicleKm(v);p.textContent=vehicleName(v)+' — '+(oil==null?'Dernière vidange à renseigner':oil+3000<=km?'VIDANGE ÉCHUE ('+(km-oil-3000)+' km de dépassement)': 'Prochaine vidange dans '+(oil+3000-km)+' km');if(oil!=null&&oil+3000<=km)p.className='error';root.append(p)})}
 function renderHistory(){const root=$('historyTables');root.replaceChildren();for(const [table,rows] of Object.entries(histories)){const h=document.createElement('h3');h.textContent=table+' ('+rows.length+')';root.append(h);const wrap=document.createElement('div');wrap.className='tablewrap';const t=document.createElement('table');const keys=rows.length?Object.keys(rows[0]).filter(k=>!['reponses','questionnaire'].includes(k)).slice(0,9):[];const thead=document.createElement('thead'),thr=document.createElement('tr');keys.forEach(k=>{const th=document.createElement('th');th.textContent=k;thr.append(th)});thead.append(thr);t.append(thead);const body=document.createElement('tbody');rows.slice(0,100).forEach(r=>{const tr=document.createElement('tr');keys.forEach(k=>cell(tr,typeof r[k]==='object'?JSON.stringify(r[k]):r[k]));body.append(tr)});t.append(body);wrap.append(t);root.append(wrap);if(!rows.length){const p=document.createElement('p');p.textContent='Aucune donnée accessible.';root.append(p)}}}
 async function loadUsers(){const root=$('userList'),select=$('permissionUser');root.replaceChildren();select.replaceChildren();select.append(opt('Sélectionner un utilisateur'));select.firstChild.value='';if(!profile?.administrateur_principal){root.textContent='Gestion réservée à l’administrateur principal.';return}try{userProfiles=await readTable('profils');userProfiles.forEach(u=>{const p=document.createElement('p');p.textContent=(u.nom_complet||u.nom||u.id)+' — '+(u.actif?'Actif':'Inactif')+(u.administrateur_principal?' — Administrateur principal':'');root.append(p);const o=opt(u.nom_complet||u.nom||u.id);o.value=u.id;select.append(o)})}catch(e){displayError(e,'Lecture des profils impossible')}}
 $('permissionName').replaceChildren();PERMS.forEach(p=>{const o=opt(p);o.value=p;$('permissionName').append(o)});
 async function save(table,payload,form,editId=null){try{let q=editId?sb.from(table).update(payload).eq('id',editId):sb.from(table).insert(payload);const {error}=await q;if(error)throw error;msg('Enregistrement confirmé dans Supabase : '+table+'.');if(form){form.reset();delete form.dataset.editId}await load();return true}catch(e){displayError(e,'Échec de l’enregistrement dans '+table);return false}}
-$('vehicleForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_vehicules'))return msg('Permission gérer les véhicules non accordée.',true);const f=e.target,km=num(f,'kilometrage_actuel'),oil=num(f,'kilometrage_derniere_vidange');if(oil!=null&&oil>km)return msg('Dernière vidange supérieure au kilométrage actuel.',true);await save('vehicules',{immatriculation:val(f,'immatriculation').toUpperCase(),marque_modele:val(f,'marque_modele'),kilometrage_actuel:km,kilometrage_derniere_vidange:oil},f,f.dataset.editId)};
+$('vehicleForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_vehicules'))return msg('Permission gérer les véhicules non accordée.',true);const f=e.target,km=num(f,'kilometrage_actuel'),oil=num(f,'kilometrage_derniere_vidange');if(oil!=null&&oil>km)return msg('Dernière vidange supérieure au kilométrage actuel.',true);await save('vehicules',{immatriculation:val(f,'immatriculation').toUpperCase(),modele:val(f,'modele'),kilometrage_actuel:km,kilometrage_derniere_vidange:oil},f,f.dataset.editId)};
 $('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase=val(f,'phase');if(!hasPermission(phase==='depart'?'controle_depart':'controle_retour'))return msg('Permission de contrôle non accordée.',true);const reponses=[];for(const s of document.querySelectorAll('[data-question]')){if(!s.value)return msg('Répondez à toutes les questions.',true);const detail=s.nextElementSibling;if(s.value==='non'&&!detail.value.trim())return msg('Décrivez le défaut : '+s.dataset.question,true);reponses.push({question:s.dataset.question,reponse:s.value,defaut:s.value==='non'?detail.value.trim():''})}const payload={...formJSON(f,['vehicule_id','phase','conducteur','reference_mission','observations']),date_controle:new Date(val(f,'date_controle')).toISOString(),kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),reponses};await save('controles',payload,f)};
 $('repairForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);const f=e.target;await save('reparations',{...formJSON(f,['vehicule_id','date_reparation','garage','numero_facture','travaux']),kilometrage:num(f,'kilometrage'),montant_fcfa:num(f,'montant_fcfa')},f)};
 $('oilForm').onsubmit=async e=>{e.preventDefault();const f=e.target,v=vehicles.find(x=>String(x.id)===val(f,'vehicule_id')),km=num(f,'kilometrage');if(!v)return msg('Sélectionnez un véhicule.',true);if(km>vehicleKm(v))return msg('Le kilométrage de vidange dépasse le kilométrage enregistré du véhicule.',true);if(!confirm('Confirmer la vidange réellement effectuée ?'))return;const payload={...formJSON(f,['vehicule_id','date_vidange','garage','numero_facture']),kilometrage:km,montant_fcfa:num(f,'montant_fcfa')};const ok=await save('vidanges',payload,f);if(ok){const {error}=await sb.from('vehicules').update({kilometrage_derniere_vidange:km}).eq('id',v.id);if(error)displayError(error,'Vidange enregistrée, mais mise à jour du véhicule impossible');else await load()}};
 $('permissionForm').onsubmit=async e=>{e.preventDefault();if(!profile?.administrateur_principal)return msg('Réservé à l’administrateur principal.',true);const f=e.target,payload={utilisateur_id:val(f,'utilisateur_id'),permission:val(f,'permission'),autorise:val(f,'autorise')==='true'};try{const {error}=await sb.from('autorisations').upsert(payload,{onConflict:'utilisateur_id,permission'});if(error)throw error;msg('Autorisation enregistrée.')}catch(err){displayError(err,'Impossible d’enregistrer la permission')}};
-
-// AJOUT : Gestion du changement de mot de passe
 $('btnUpdatePassword').onclick = async () => {
     const newPassword = $('newPassword').value;
     const msgEl = $('pwdMessage');
-    
-    if (!newPassword || newPassword.length < 6) {
-        msgEl.style.color = '#a32727';
-        msgEl.textContent = "Le mot de passe doit contenir au moins 6 caractères.";
-        return;
-    }
-
-    $('btnUpdatePassword').disabled = true;
-    $('btnUpdatePassword').textContent = "Enregistrement...";
-    msgEl.textContent = "";
-
+    if (!newPassword || newPassword.length < 6) { msgEl.style.color = '#a32727'; msgEl.textContent = "Le mot de passe doit contenir au moins 6 caractères."; return; }
+    $('btnUpdatePassword').disabled = true; $('btnUpdatePassword').textContent = "Enregistrement..."; msgEl.textContent = "";
     try {
         const { data, error } = await sb.auth.updateUser({ password: newPassword });
-        if (error) {
-            msgEl.style.color = '#a32727';
-            msgEl.textContent = "Erreur : " + error.message;
-        } else {
-            msgEl.style.color = '#117246';
-            msgEl.textContent = "✅ Mot de passe modifié avec succès !";
-            $('newPassword').value = "";
-        }
-    } catch (err) {
-        msgEl.style.color = '#a32727';
-        msgEl.textContent = "Erreur inattendue : " + err.message;
-    } finally {
-        $('btnUpdatePassword').disabled = false;
-        $('btnUpdatePassword').textContent = "Mettre à jour le mot de passe";
-    }
+        if (error) { msgEl.style.color = '#a32727'; msgEl.textContent = "Erreur : " + error.message; }
+        else { msgEl.style.color = '#117246'; msgEl.textContent = "✅ Mot de passe modifié avec succès !"; $('newPassword').value = ""; }
+    } catch (err) { msgEl.style.color = '#a32727'; msgEl.textContent = "Erreur inattendue : " + err.message; }
+    finally { $('btnUpdatePassword').disabled = false; $('btnUpdatePassword').textContent = "Mettre à jour le mot de passe"; }
 };
-
 async function render(s){session=s;$('login').hidden=!!s;$('app').hidden=!s;if(!s)return;const {data,error}=await sb.from('profils').select('*').eq('id',s.user.id).maybeSingle();if(error||!data?.actif){$('app').hidden=true;$('login').hidden=false;$('loginMsg').textContent='Profil inactif ou inaccessible : '+(error?.message||'contactez l’administrateur');await sb.auth.signOut();return}profile=data;profile.permissions=[];if(!data.administrateur_principal){const {data:grants,error:grantsError}=await sb.from('autorisations').select('permission,autorise').eq('utilisateur_id',s.user.id);if(grantsError)displayError(grantsError,'Lecture des permissions');else profile.permissions=(grants||[]).filter(x=>x.autorise).map(x=>x.permission)}$('who').textContent=s.user.email;
-// Mise à jour du champ email dans le formulaire de mot de passe
 if($('currentEmail')) $('currentEmail').textContent = s.user.email;
 $('role').textContent=data.administrateur_principal?'Administrateur principal':'Utilisateur autorisé';$('users').querySelector('form').hidden=!data.administrateur_principal;await load()}
 $('loginForm').onsubmit=async e=>{e.preventDefault();if(!sb)return;$('loginBtn').disabled=true;$('loginMsg').textContent='Connexion en cours…';const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;if(error){$('loginMsg').textContent=errText(error);return}$('password').value='';$('loginMsg').textContent='';await render(data.session)};
