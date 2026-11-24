@@ -10,19 +10,9 @@ label{display:block;font-weight:600;margin:12px 0 5px}input,select,textarea{widt
 button{font:inherit;border:0;border-radius:8px;background:#145c9c;color:white;padding:10px 15px;cursor:pointer;margin:3px 3px 3px 0}button.secondary{background:#e5eef8;color:#153b66}button.danger{background:#8e2931}button:disabled{opacity:.6;cursor:wait}
 nav{display:flex;gap:6px;flex-wrap:wrap;margin:15px 0}nav button{background:#e3eaf4;color:#193b60}nav button.active{background:#145c9c;color:white}
 [hidden]{display:none!important}.muted{color:#61748a}.error{color:#a32727}.success{color:#117246}.banner{background:#fff8e5;border-left:4px solid #c18b19;padding:12px;border-radius:6px;margin:12px 0}
-.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:630px}th,td{padding:11px;text-align:left;border-bottom:1px solid #e2e8f0}th{background:#edf3fa}.stat{padding:15px;background:#eef5fd;border-radius:10px}.stat b{font-size:1.8rem;display:block}
+.q{padding:12px;border-bottom:1px solid #e2e9f2}.q label{margin:0 0 8px}.q select{max-width:240px}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:630px}th,td{padding:11px;text-align:left;border-bottom:1px solid #e2e8f0}th{background:#edf3fa}.stat{padding:15px;background:#eef5fd;border-radius:10px}.stat b{font-size:1.8rem;display:block}
 #login{max-width:470px;margin:45px auto}.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}.pill{font-size:12px;padding:4px 8px;border-radius:15px;background:#e8f0fb}
 footer{padding:22px;color:#667b8f;text-align:center}
-
-/* NOUVEAUX STYLES POUR LE QUESTIONNAIRE */
-.questionnaire-section { margin-top: 25px; }
-.question-group { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-.question-group h3 { margin-top: 0; margin-bottom: 15px; color: #145c9c; font-size: 1.1rem; border-bottom: 2px solid #dce4ef; padding-bottom: 8px; }
-.q-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 10px 0; border-bottom: 1px dashed #e2e8f0; }
-.q-row:last-child { border-bottom: none; }
-.q-row label { margin: 0; font-weight: 500; flex: 1; }
-.q-row select { max-width: 180px; }
-.q-detail { margin-top: 10px; width: 100%; }
 </style></head><body>
 <header><h1>ADKOUL — Contrôle et maintenance des véhicules</h1><p>Application indépendante • Gestion sécurisée par Supabase</p></header>
 <main>
@@ -36,44 +26,32 @@ footer{padding:22px;color:#667b8f;text-align:center}
 <button data-tab="dashboard" class="active">Tableau de bord</button><button data-tab="vehicles">Véhicules</button><button data-tab="inspection">Questionnaires départ / retour</button><button data-tab="repairs">Réparations</button><button data-tab="oil">Vidanges</button><button data-tab="history">Historique</button><button data-tab="users">Utilisateurs et droits</button>
 </nav>
 <p id="notice" role="status"></p>
-<section id="dashboard" class="panel">
-<div class="grid">
+<section id="dashboard" class="panel"><div class="grid">
 <div class="stat">Véhicules<b id="sVehicles">—</b></div><div class="stat">Contrôles<b id="sControls">—</b></div><div class="stat">Réparations<b id="sRepairs">—</b></div><div class="stat">Vidanges<b id="sOil">—</b></div>
-</div>
-<div class="card"><h2>Alertes vidange</h2><p>Échéance calculée à partir de la dernière vidange (colonne intervalle_km).</p><div id="alerts"></div></div>
-<div class="card">
-    <h2>Changer mon mot de passe</h2>
-    <p class="muted">Vous êtes connecté avec : <strong id="currentEmail"></strong></p>
-    <div class="grid"><div><label for="newPassword">Nouveau mot de passe *</label><input type="password" id="newPassword" placeholder="Entrez votre nouveau mot de passe (min 6 caractères)"></div></div>
-    <p style="margin-top:10px;"><button type="button" id="btnUpdatePassword">Mettre à jour le mot de passe</button></p>
-    <p id="pwdMessage" role="status" style="font-weight:bold;"></p>
-</div>
-</section>
+</div><div class="card"><h2>Alertes vidange</h2><p>Échéance indicative calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div></section>
 <section id="vehicles" class="panel" hidden><div class="card"><h2>Ajouter / modifier un véhicule</h2><form id="vehicleForm">
-<div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div></div>
-<button type="submit">Enregistrer le véhicule</button><button type="reset" class="secondary">Effacer</button></form></div><div class="card"><h2>Parc automobile</h2><div class="tablewrap"><table><thead><tr><th>Immatriculation</th><th>Modèle</th><th>Kilométrage</th><th>Action</th></tr></thead><tbody id="vehiclesRows"></tbody></table></div></div></section>
+<div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="marque_modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div><div><label>Dernière vidange (km)</label><input name="kilometrage_derniere_vidange" type="number" min="0" step="1"></div></div>
+<button type="submit">Enregistrer le véhicule</button><button type="reset" class="secondary">Effacer</button></form></div><div class="card"><h2>Parc automobile</h2><div class="tablewrap"><table><thead><tr><th>Immatriculation</th><th>Modèle</th><th>Kilométrage</th><th>Vidange à</th><th>Action</th></tr></thead><tbody id="vehiclesRows"></tbody></table></div></div></section>
 <section id="inspection" class="panel" hidden><div class="card"><h2>Questionnaire de contrôle départ / retour</h2><form id="inspectionForm">
 <div class="grid"><div><label>Phase *</label><select name="phase" id="phase"><option value="depart">Avant départ</option><option value="retour">Au retour</option></select></div>
 <div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div>
-<div><label>Chauffeur (ID) *</label><input name="chauffeur_id" required placeholder="ID du chauffeur (uuid)"></div>
+<div><label>Nom du chauffeur *</label><input name="conducteur" required><small class="muted">Nom conservé dans le questionnaire ; aucun UUID inventé.</small></div>
 <div><label>Référence de mission</label><input name="reference_mission"></div>
 <div><label>Date et heure *</label><input name="date_controle" type="datetime-local" required></div>
 <div><label>Kilométrage relevé *</label><input name="kilometrage" type="number" min="0" step="1" required></div>
 <div><label>Carburant (litres)</label><input name="carburant_litres" type="number" min="0" step="0.1"></div></div>
-<div id="questions" class="questionnaire-section"></div>
-<label>Observations complémentaires</label><textarea name="observations"></textarea>
+<div id="questions"></div><label>Observations complémentaires</label><textarea name="observations"></textarea>
 <p><button type="submit">Enregistrer le questionnaire</button></p></form></div></section>
 <section id="repairs" class="panel" hidden><div class="card"><h2>Enregistrer une réparation</h2><form id="repairForm">
-<div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_reparation" type="date" required></div><div><label>Garage</label><input name="garage"></div><div><label>Description des travaux *</label><input name="description" required></div></div>
-<button type="submit">Enregistrer la réparation</button></form></div></section>
+<div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_reparation" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Garage</label><input name="garage"></div><div><label>Montant FCFA</label><input name="montant_fcfa" type="number" min="0"></div><div><label>N° facture</label><input name="numero_facture"></div></div>
+<label>Travaux effectués *</label><textarea name="travaux" required></textarea><button type="submit">Enregistrer la réparation</button></form><p class="muted">Les références de facture sont enregistrées ici. Le téléversement du fichier facture dans Supabase Storage nécessite une configuration distincte.</p></div></section>
 <section id="oil" class="panel" hidden><div class="card"><h2>Enregistrer une vidange</h2><form id="oilForm">
-<div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_vidange" type="date" required></div><div><label>Kilométrage *</label><input name="kilometre" type="number" min="0" required></div><div><label>Intervalle (km)</label><input name="intervalle_km" type="number" min="0" value="3000"></div><div><label>Observations</label><textarea name="observations"></textarea></div></div>
-<button type="submit">Confirmer la vidange effectuée</button></form></div></section>
+<div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_vidange" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Intervalle (km)</label><input name="intervalle_km" type="number" min="1" value="3000" required></div></div><label>Observations</label><textarea name="observations"></textarea><button type="submit">Confirmer la vidange effectuée</button></form></div></section>
 <section id="history" class="panel" hidden><div class="card"><h2>Historique des opérations</h2><div id="historyTables"></div></div></section>
 <section id="users" class="panel" hidden><div class="card"><h2>Utilisateurs et permissions</h2><p class="muted">Les comptes d'authentification doivent être créés dans Supabase Auth ou par un service serveur sécurisé. Ne jamais intégrer une clé secrète d'administration dans cette page.</p><div id="userList"></div>
 <h3>Attribuer une permission à un utilisateur existant</h3><form id="permissionForm"><div class="grid"><div><label>Profil *</label><select id="permissionUser" name="utilisateur_id" required></select></div><div><label>Permission *</label><select id="permissionName" name="permission" required></select></div><div><label>Décision</label><select name="autorise"><option value="true">Autoriser</option><option value="false">Refuser</option></select></div></div><button type="submit">Enregistrer la permission</button></form>
 <p class="muted">Cette opération dépend des politiques RLS de la table <code>autorisations</code>. Les profils non administrateurs ne doivent pas pouvoir s'accorder eux-mêmes des droits.</p></div></section>
-</div></main><footer>ADKOUL • Application indépendante • Version 1.0 — interface complète à valider avec le schéma Supabase</footer>
+</div></main><footer>ADKOUL • Application indépendante • Version 1.1 — champs alignés sur le schéma Supabase communiqué</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 'use strict';
@@ -94,50 +72,7 @@ function cell(tr,t){const td=document.createElement('td');td.textContent=t==null
 function hasPermission(p){return profile?.administrateur_principal===true || (profile?.permissions||[]).includes(p)}
 function activate(tab){document.querySelectorAll('.panel').forEach(x=>x.hidden=x.id!==tab);document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab))}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>activate(b.dataset.tab));
-
-// GÉNÉRATION DU QUESTIONNAIRE AVEC LE NOUVEAU STYLE
-for(const [group,items] of Object.entries(GROUPS)){
-    const section = document.createElement('div');
-    section.className = 'question-group';
-    const h = document.createElement('h3');
-    h.textContent = group;
-    section.append(h);
-    
-    items.forEach(q => {
-        const row = document.createElement('div');
-        row.className = 'q-row';
-        
-        const l = document.createElement('label');
-        l.textContent = q;
-        
-        const select = document.createElement('select');
-        select.dataset.question = q;
-        select.required = true;
-        
-        select.append(opt('')); // Option vide par défaut
-        [['oui','Oui'],['non','Non'],['na','N/A']].forEach(([v,t]) => {
-            const o = opt(t);
-            o.value = v;
-            select.append(o);
-        });
-        
-        const detail = document.createElement('textarea');
-        detail.className = 'q-detail';
-        detail.placeholder = 'Précisez le défaut constaté...';
-        detail.hidden = true;
-        
-        select.onchange = () => {
-            detail.hidden = select.value !== 'non';
-            detail.required = select.value === 'non';
-            if(!detail.hidden) detail.focus();
-        };
-        
-        row.append(l, select);
-        section.append(row, detail); // La zone de détail se place sous la ligne
-    });
-    $('questions').append(section);
-}
-
+for(const [group,items] of Object.entries(GROUPS)){const h=document.createElement('h3');h.textContent=group;$('questions').append(h);items.forEach(q=>{const div=document.createElement('div');div.className='q';const l=document.createElement('label');l.textContent=q;const s=document.createElement('select');s.dataset.question=q;s.required=true;s.append(opt(''));[['oui','Oui'],['non','Non'],['na','Non applicable']].forEach(([v,t])=>{const o=opt(t);o.value=v;s.append(o)});const detail=document.createElement('textarea');detail.placeholder='Précisez le défaut constaté';detail.hidden=true;s.onchange=()=>{detail.hidden=s.value!=='non';detail.required=s.value==='non'};div.append(l,s,detail);$('questions').append(div)})}
 function formJSON(form,keys){const out={};for(const k of keys){const v=val(form,k);out[k]=v||null}return out}
 async function readTable(table){const {data,error}=await sb.from(table).select('*').limit(500);if(error)throw error;return data||[]}
 async function load(){if(!session)return;msg('Chargement des données…');try{
@@ -148,70 +83,23 @@ renderVehicles();renderHistory();renderAlerts();await loadUsers();msg('Données 
 }catch(e){displayError(e,'Lecture Supabase impossible');}}
 function vehicleName(v){return v.immatriculation||v.numero_immatriculation||v.id}
 function vehicleKm(v){return Number(v.kilometrage_actuel??v.kilometrage??0)}
+function vehicleOil(v){return v.kilometrage_derniere_vidange==null?null:Number(v.kilometrage_derniere_vidange)}
 function renderVehicles(){
-const tb=$('vehiclesRows');tb.replaceChildren();document.querySelectorAll('.vehiclePicker').forEach(s=>{s.replaceChildren();s.append(opt('Sélectionnez un véhicule'));s.firstChild.value='';vehicles.forEach(v=>{const o=opt(vehicleName(v));o.value=v.identifiant; /* Adaptation : identifiant */ s.append(o)})});
-vehicles.forEach(v=>{const tr=document.createElement('tr');cell(tr,vehicleName(v));cell(tr,v.modele||v.marque_modele||'—');cell(tr,vehicleKm(v));const td=cell(tr,'');const b=document.createElement('button');b.className='secondary';b.textContent='Modifier';b.onclick=()=>{const f=$('vehicleForm');for(const k of ['immatriculation','modele','kilometrage_actuel'])if(f.elements.namedItem(k))f.elements.namedItem(k).value=v[k]??'';f.dataset.editId=v.identifiant; /* Adaptation : identifiant */ activate('vehicles');f.scrollIntoView({behavior:'smooth'})};td.append(b);tb.append(tr)});
+const tb=$('vehiclesRows');tb.replaceChildren();document.querySelectorAll('.vehiclePicker').forEach(s=>{s.replaceChildren();s.append(opt('Sélectionnez un véhicule'));s.firstChild.value='';vehicles.forEach(v=>{const o=opt(vehicleName(v));o.value=v.id;s.append(o)})});
+vehicles.forEach(v=>{const tr=document.createElement('tr');cell(tr,vehicleName(v));cell(tr,v.marque_modele||v.modele||'—');cell(tr,vehicleKm(v));cell(tr,vehicleOil(v)==null?'Non renseignée':vehicleOil(v)+3000);const td=cell(tr,'');const b=document.createElement('button');b.className='secondary';b.textContent='Modifier';b.onclick=()=>{const f=$('vehicleForm');for(const k of ['immatriculation','marque_modele','kilometrage_actuel','kilometrage_derniere_vidange'])if(f.elements.namedItem(k))f.elements.namedItem(k).value=v[k]??'';f.dataset.editId=v.id;activate('vehicles');f.scrollIntoView({behavior:'smooth'})};td.append(b);tb.append(tr)});
 }
-function renderAlerts(){
-    const root=$('alerts');root.replaceChildren();
-    if(!vehicles.length){root.textContent='Aucun véhicule enregistré.';return}
-    vehicles.forEach(v=>{
-        const p=document.createElement('p');
-        const km=vehicleKm(v);
-        // On utilise la dernière vidange enregistrée dans l'historique
-        const vids = histories.vidanges.filter(x => String(x.identifiant_vehicule) === String(v.identifiant)).sort((a,b)=> new Date(b.date_vidange) - new Date(a.date_vidange));
-        const lastOil = vids.length > 0 ? vids[0] : null;
-        
-        if (!lastOil) {
-            p.textContent = vehicleName(v) + ' — Aucune vidange enregistrée';
-        } else {
-            const oilKm = Number(lastOil.kilometre);
-            const interval = Number(lastOil.intervalle_km || 3000);
-            const nextOil = oilKm + interval;
-            if (nextOil <= km) {
-                p.textContent = vehicleName(v) + ' — VIDANGE ÉCHUE (' + (km - nextOil) + ' km de dépassement)';
-                p.className = 'error';
-            } else {
-                p.textContent = vehicleName(v) + ' — Prochaine vidange dans ' + (nextOil - km) + ' km';
-            }
-        }
-        root.append(p);
-    });
-}
+function renderAlerts(){const root=$('alerts');root.replaceChildren();if(!vehicles.length){root.textContent='Aucun véhicule enregistré.';return}vehicles.forEach(v=>{const p=document.createElement('p'),oil=vehicleOil(v),km=vehicleKm(v);p.textContent=vehicleName(v)+' — '+(oil==null?'Dernière vidange à renseigner':oil+3000<=km?'VIDANGE ÉCHUE ('+(km-oil-3000)+' km de dépassement)': 'Prochaine vidange dans '+(oil+3000-km)+' km');if(oil!=null&&oil+3000<=km)p.className='error';root.append(p)})}
 function renderHistory(){const root=$('historyTables');root.replaceChildren();for(const [table,rows] of Object.entries(histories)){const h=document.createElement('h3');h.textContent=table+' ('+rows.length+')';root.append(h);const wrap=document.createElement('div');wrap.className='tablewrap';const t=document.createElement('table');const keys=rows.length?Object.keys(rows[0]).filter(k=>!['reponses','questionnaire'].includes(k)).slice(0,9):[];const thead=document.createElement('thead'),thr=document.createElement('tr');keys.forEach(k=>{const th=document.createElement('th');th.textContent=k;thr.append(th)});thead.append(thr);t.append(thead);const body=document.createElement('tbody');rows.slice(0,100).forEach(r=>{const tr=document.createElement('tr');keys.forEach(k=>cell(tr,typeof r[k]==='object'?JSON.stringify(r[k]):r[k]));body.append(tr)});t.append(body);wrap.append(t);root.append(wrap);if(!rows.length){const p=document.createElement('p');p.textContent='Aucune donnée accessible.';root.append(p)}}}
 async function loadUsers(){const root=$('userList'),select=$('permissionUser');root.replaceChildren();select.replaceChildren();select.append(opt('Sélectionner un utilisateur'));select.firstChild.value='';if(!profile?.administrateur_principal){root.textContent='Gestion réservée à l’administrateur principal.';return}try{userProfiles=await readTable('profils');userProfiles.forEach(u=>{const p=document.createElement('p');p.textContent=(u.nom_complet||u.nom||u.id)+' — '+(u.actif?'Actif':'Inactif')+(u.administrateur_principal?' — Administrateur principal':'');root.append(p);const o=opt(u.nom_complet||u.nom||u.id);o.value=u.id;select.append(o)})}catch(e){displayError(e,'Lecture des profils impossible')}}
 $('permissionName').replaceChildren();PERMS.forEach(p=>{const o=opt(p);o.value=p;$('permissionName').append(o)});
-async function save(table,payload,form,editId=null){try{let q=editId?sb.from(table).update(payload).eq('identifiant',editId):sb.from(table).insert(payload);const {error}=await q;if(error)throw error;msg('Enregistrement confirmé dans Supabase : '+table+'.');if(form){form.reset();delete form.dataset.editId}await load();return true}catch(e){displayError(e,'Échec de l’enregistrement dans '+table);return false}}
-
-$('vehicleForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_vehicules'))return msg('Permission gérer les véhicules non accordée.',true);const f=e.target,km=num(f,'kilometrage_actuel');await save('vehicules',{immatriculation:val(f,'immatriculation').toUpperCase(),modele:val(f,'modele'),kilometrage_actuel:km},f,f.dataset.editId)};
-
-$('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase=val(f,'phase');if(!hasPermission(phase==='depart'?'controle_depart':'controle_retour'))return msg('Permission de contrôle non accordée.',true);const reponses=[];for(const s of document.querySelectorAll('[data-question]')){if(!s.value)return msg('Répondez à toutes les questions.',true);const detail=s.parentElement.nextElementSibling; if(s.value==='non'&&(!detail.value||!detail.value.trim()))return msg('Décrivez le défaut : '+s.dataset.question,true);reponses.push({question:s.dataset.question,reponse:s.value,defaut:s.value==='non'?detail.value.trim():''})}const payload={vehicule_id:val(f,'vehicule_id'),chauffeur_id:val(f,'chauffeur_id'),type_controle:phase,date_controle:new Date(val(f,'date_controle')).toISOString(),kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),observations:val(f,'observations'),reponses};await save('controles',payload,f)};
-
-$('repairForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);const f=e.target;await save('reparations',{vehicule_id:val(f,'vehicule_id'),reparation_de_date:val(f,'date_reparation'),garage:val(f,'garage'),description:val(f,'description')},f)};
-
-$('oilForm').onsubmit=async e=>{e.preventDefault();const f=e.target,v=vehicles.find(x=>String(x.identifiant)===val(f,'vehicule_id')),km=num(f,'kilometre');if(!v)return msg('Sélectionnez un véhicule.',true);if(km>vehicleKm(v))return msg('Le kilométrage de vidange dépasse le kilométrage enregistré du véhicule.',true);if(!confirm('Confirmer la vidange réellement effectuée ?'))return;const payload={vehicule_id:val(f,'vehicule_id'),date_vidange:val(f,'date_vidange'),kilometre:km,intervalle_km:num(f,'intervalle_km'),observations:val(f,'observations')};await save('vidanges',payload,f)};
-
+async function save(table,payload,form,editId=null){try{let q=editId?sb.from(table).update(payload).eq('id',editId):sb.from(table).insert(payload);const {error}=await q;if(error)throw error;msg('Enregistrement confirmé dans Supabase : '+table+'.');if(form){form.reset();delete form.dataset.editId}await load();return true}catch(e){displayError(e,'Échec de l’enregistrement dans '+table);return false}}
+$('vehicleForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_vehicules'))return msg('Permission gérer les véhicules non accordée.',true);const f=e.target,km=num(f,'kilometrage_actuel'),oil=num(f,'kilometrage_derniere_vidange');if(oil!=null&&oil>km)return msg('Dernière vidange supérieure au kilométrage actuel.',true);await save('vehicules',{immatriculation:val(f,'immatriculation').toUpperCase(),marque_modele:val(f,'marque_modele'),kilometrage_actuel:km,kilometrage_derniere_vidange:oil},f,f.dataset.editId)};
+$('inspectionForm').onsubmit=async e=>{e.preventDefault();const f=e.target,phase=val(f,'phase');if(!hasPermission(phase==='depart'?'controle_depart':'controle_retour'))return msg('Permission de contrôle non accordée.',true);const reponses=[];for(const s of document.querySelectorAll('[data-question]')){if(!s.value)return msg('Répondez à toutes les questions.',true);const detail=s.nextElementSibling;if(s.value==='non'&&!detail.value.trim())return msg('Décrivez le défaut : '+s.dataset.question,true);reponses.push({question:s.dataset.question,reponse:s.value,defaut:s.value==='non'?detail.value.trim():''})}const dateSaisie=val(f,'date_controle');if(!dateSaisie||Number.isNaN(new Date(dateSaisie).getTime()))return msg('Date de contrôle invalide.',true);const questionnaire={version:1,chauffeur_nom:val(f,'conducteur'),reference_mission:val(f,'reference_mission')||null,date_controle:new Date(dateSaisie).toISOString(),reponses};const payload={vehicule_id:Number(val(f,'vehicule_id')),type_controle:phase,kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),questionnaire,observations:val(f,'observations')||null};await save('controles',payload,f)};
+$('repairForm').onsubmit=async e=>{e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);const f=e.target;await save('reparations',{vehicule_id:Number(val(f,'vehicule_id')),date_reparation:val(f,'date_reparation'),garage:val(f,'garage')||null,numero_facture:val(f,'numero_facture')||null,description:val(f,'travaux'),cout:num(f,'montant_fcfa')},f)};
+$('oilForm').onsubmit=async e=>{e.preventDefault();const f=e.target,v=vehicles.find(x=>String(x.id)===val(f,'vehicule_id')),km=num(f,'kilometrage');if(!v)return msg('Sélectionnez un véhicule.',true);if(km>vehicleKm(v))return msg('Le kilométrage de vidange dépasse le kilométrage enregistré du véhicule.',true);if(!confirm('Confirmer la vidange réellement effectuée ?'))return;const payload={vehicule_id:Number(val(f,'vehicule_id')),date_vidange:val(f,'date_vidange'),kilometrage:km,intervalle_km:num(f,'intervalle_km'),observations:val(f,'observations')||null};const ok=await save('vidanges',payload,f);if(ok){const {error}=await sb.from('vehicules').update({kilometrage_derniere_vidange:km}).eq('id',v.id);if(error)displayError(error,'Vidange enregistrée, mais mise à jour du véhicule impossible');else await load()}};
 $('permissionForm').onsubmit=async e=>{e.preventDefault();if(!profile?.administrateur_principal)return msg('Réservé à l’administrateur principal.',true);const f=e.target,payload={utilisateur_id:val(f,'utilisateur_id'),permission:val(f,'permission'),autorise:val(f,'autorise')==='true'};try{const {error}=await sb.from('autorisations').upsert(payload,{onConflict:'utilisateur_id,permission'});if(error)throw error;msg('Autorisation enregistrée.')}catch(err){displayError(err,'Impossible d’enregistrer la permission')}};
-
-$('btnUpdatePassword').onclick = async () => {
-    const newPassword = $('newPassword').value;
-    const msgEl = $('pwdMessage');
-    if (!newPassword || newPassword.length < 6) { msgEl.style.color = '#a32727'; msgEl.textContent = "Le mot de passe doit contenir au moins 6 caractères."; return; }
-    $('btnUpdatePassword').disabled = true; $('btnUpdatePassword').textContent = "Enregistrement..."; msgEl.textContent = "";
-    try {
-        const { data, error } = await sb.auth.updateUser({ password: newPassword });
-        if (error) { msgEl.style.color = '#a32727'; msgEl.textContent = "Erreur : " + error.message; }
-        else { msgEl.style.color = '#117246'; msgEl.textContent = "✅ Mot de passe modifié avec succès !"; $('newPassword').value = ""; }
-    } catch (err) { msgEl.style.color = '#a32727'; msgEl.textContent = "Erreur inattendue : " + err.message; }
-    finally { $('btnUpdatePassword').disabled = false; $('btnUpdatePassword').textContent = "Mettre à jour le mot de passe"; }
-};
-
-async function render(s){session=s;$('login').hidden=!!s;$('app').hidden=!s;if(!s)return;const {data,error}=await sb.from('profils').select('*').eq('id',s.user.id).maybeSingle();if(error||!data?.actif){$('app').hidden=true;$('login').hidden=false;$('loginMsg').textContent='Profil inactif ou inaccessible : '+(error?.message||'contactez l’administrateur');await sb.auth.signOut();return}profile=data;profile.permissions=[];if(!data.administrateur_principal){const {data:grants,error:grantsError}=await sb.from('autorisations').select('permission,autorise').eq('utilisateur_id',s.user.id);if(grantsError)displayError(grantsError,'Lecture des permissions');else profile.permissions=(grants||[]).filter(x=>x.autorise).map(x=>x.permission)}$('who').textContent=s.user.email;
-if($('currentEmail')) $('currentEmail').textContent = s.user.email;
-$('role').textContent=data.administrateur_principal?'Administrateur principal':'Utilisateur autorisé';$('users').querySelector('form').hidden=!data.administrateur_principal;await load()}
-
+async function render(s){session=s;$('login').hidden=!!s;$('app').hidden=!s;if(!s)return;const {data,error}=await sb.from('profils').select('*').eq('id',s.user.id).maybeSingle();if(error||!data?.actif){$('app').hidden=true;$('login').hidden=false;$('loginMsg').textContent='Profil inactif ou inaccessible : '+(error?.message||'contactez l’administrateur');await sb.auth.signOut();return}profile=data;profile.permissions=[];if(!data.administrateur_principal){const {data:grants,error:grantsError}=await sb.from('autorisations').select('permission,autorise').eq('utilisateur_id',s.user.id);if(grantsError)displayError(grantsError,'Lecture des permissions');else profile.permissions=(grants||[]).filter(x=>x.autorise).map(x=>x.permission)}$('who').textContent=s.user.email;$('role').textContent=data.administrateur_principal?'Administrateur principal':'Utilisateur autorisé';$('users').querySelector('form').hidden=!data.administrateur_principal;await load()}
 $('loginForm').onsubmit=async e=>{e.preventDefault();if(!sb)return;$('loginBtn').disabled=true;$('loginMsg').textContent='Connexion en cours…';const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});$('loginBtn').disabled=false;if(error){$('loginMsg').textContent=errText(error);return}$('password').value='';$('loginMsg').textContent='';await render(data.session)};
-
 $('logout').onclick=async()=>{await sb.auth.signOut();profile=null;await render(null)};
 $('reload').onclick=load;
 const now=new Date();const local=new Date(now.getTime()-now.getTimezoneOffset()*60000);document.querySelector('[name=date_controle]').value=local.toISOString().slice(0,16);document.querySelector('[name=date_reparation]').value=local.toISOString().slice(0,10);document.querySelector('[name=date_vidange]').value=local.toISOString().slice(0,10);
