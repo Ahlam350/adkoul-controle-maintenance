@@ -73,6 +73,9 @@ body>*:not(main){display:none!important}main>*{display:none!important}main{max-w
 #linkedDepartureBox{background:#f0f8fa;border:1px solid #c9e6e7;border-radius:12px;padding:13px}
 #linkedDepartureBox label{margin-top:0}
 @media print{.mission-status{display:none}}
+/* V20 : anomalies et suivi carburant */
+.flag-red{color:#a61e2b;font-weight:750}.anomaly-card{border-left:5px solid #c62828;background:#fff8f7}.anomaly-item{padding:12px 14px;margin:9px 0;border:1px solid #f1c9c9;border-left:4px solid #c62828;border-radius:9px;background:#fff}.anomaly-item strong{color:#9e1b25}.fuel-note{padding:12px 15px;border-left:4px solid #d08b22;background:#fff9ec;border-radius:8px}.fuel-metric{font-weight:700;color:#123c68}.section-heading{margin:20px 0 10px;color:#123c68}.anomaly-empty{color:#117246;font-weight:650}
+@media print{#anomalies,#fuel{display:none!important}}
 </style></head><body>
 <header><h1>ADKOUL — Contrôle et maintenance des véhicules</h1><p>Application indépendante • Gestion sécurisée par Supabase</p></header>
 <main>
@@ -84,12 +87,14 @@ body>*:not(main){display:none!important}main>*{display:none!important}main{max-w
 <div id="passwordPanel" class="card password-panel" hidden><div class="toolbar"><div><h2>Modifier mon mot de passe</h2><p class="muted">Cette modification concerne uniquement votre compte connecté.</p></div><button type="button" class="secondary" id="closePassword">Fermer</button></div><form id="passwordForm"><div class="grid"><div><label for="currentPassword">Mot de passe actuel *</label><input id="currentPassword" type="password" autocomplete="current-password" required></div><div><label for="newPassword">Nouveau mot de passe *</label><input id="newPassword" type="password" minlength="12" autocomplete="new-password" required></div><div><label for="confirmPassword">Confirmer le nouveau mot de passe *</label><input id="confirmPassword" type="password" minlength="12" autocomplete="new-password" required></div></div><p class="muted">Au moins 12 caractères. Ne partagez jamais votre mot de passe.</p><button id="savePassword" type="submit">Enregistrer mon nouveau mot de passe</button><p id="passwordMessage" role="status"></p></form></div>
 <div class="banner"><strong>Enregistrement Supabase :</strong> toutes les opérations utilisent les tables du nouveau projet. Si une colonne attendue diffère de votre schéma ou si une politique RLS refuse l'opération, un message d'erreur s'affichera. Aucune donnée n'est enregistrée seulement dans le navigateur.</div>
 <nav id="nav">
-<button data-tab="dashboard" class="active">Tableau de bord</button><button data-tab="vehicles">Véhicules</button><button data-tab="inspection">Questionnaires départ / retour</button><button data-tab="repairs">Réparations</button><button data-tab="oil">Vidanges</button><button data-tab="history">Historique</button><button data-tab="users">Utilisateurs et droits</button>
+<button data-tab="dashboard" class="active">Tableau de bord</button><button data-tab="vehicles">Véhicules</button><button data-tab="inspection">Questionnaires départ / retour</button><button data-tab="repairs">Réparations</button><button data-tab="oil">Vidanges</button><button data-tab="history">Historique</button><button data-tab="anomalies">🔴 Anomalies</button><button data-tab="fuel">⛽ Consommation carburant</button><button data-tab="users">Utilisateurs et droits</button>
 </nav>
 <p id="notice" role="status"></p>
 <section id="dashboard" class="panel"><div class="grid">
 <div class="stat">Véhicules<b id="sVehicles">—</b></div><div class="stat">Contrôles<b id="sControls">—</b></div><div class="stat">Réparations<b id="sRepairs">—</b></div><div class="stat">Vidanges<b id="sOil">—</b></div>
 </div><div class="card"><h2>Alertes vidange</h2><p>Échéance indicative calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div></section>
+<section id="anomalies" class="panel" hidden><div class="card anomaly-card"><h2>🔴 Anomalies constatées</h2><p class="muted">Réponses « Non » relevées lors des contrôles de départ et de retour. Les données historiques restent inchangées.</p><div id="anomalySummary"></div><div id="anomalyList"></div></div></section>
+<section id="fuel" class="panel" hidden><div class="card"><h2>⛽ Consommation carburant — missions clôturées</h2><p class="fuel-note">Calcul indicatif à partir des litres mesurés au départ et au retour. Un ravitaillement pendant la mission, une variation de jauge ou une mesure imprécise empêche de connaître la consommation réelle. Aucun achat de carburant n’est supposé.</p><div id="fuelSummary"></div><div class="tablewrap"><table><thead><tr><th>Véhicule</th><th>Départ / Retour</th><th>Distance</th><th>Carburant départ</th><th>Carburant retour</th><th>Écart apparent</th><th>Estimation L/100 km</th></tr></thead><tbody id="fuelRows"></tbody></table></div></div></section>
 <section id="vehicles" class="panel" hidden><div class="card"><h2>Ajouter / modifier un véhicule</h2><form id="vehicleForm">
 <div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="marque_modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div><div><label>Dernière vidange (km)</label><input name="kilometrage_derniere_vidange" type="number" min="0" step="1"></div></div>
 <button type="submit">Enregistrer le véhicule</button><button type="reset" class="secondary">Effacer</button></form></div><div class="card"><h2>Parc automobile</h2><div class="tablewrap"><table><thead><tr><th>Immatriculation</th><th>Modèle</th><th>Kilométrage</th><th>Vidange à</th><th>Action</th></tr></thead><tbody id="vehiclesRows"></tbody></table></div></div></section>
@@ -113,7 +118,7 @@ body>*:not(main){display:none!important}main>*{display:none!important}main{max-w
 <section id="users" class="panel" hidden><div class="card"><h2>Utilisateurs et permissions</h2><p class="muted">Les comptes d'authentification doivent être créés dans Supabase Auth ou par un service serveur sécurisé. Ne jamais intégrer une clé secrète d'administration dans cette page.</p><div id="userList"></div>
 <h3>Attribuer une permission à un utilisateur existant</h3><form id="permissionForm"><div class="grid"><div><label>Profil *</label><select id="permissionUser" name="utilisateur_id" required></select></div><div><label>Permission *</label><select id="permissionName" name="permission" required></select></div><div><label>Décision</label><select name="autorise"><option value="true">Autoriser</option><option value="false">Refuser</option></select></div></div><button type="submit">Enregistrer la permission</button></form>
 <p class="muted">Cette opération dépend des politiques RLS de la table <code>autorisations</code>. Les profils non administrateurs ne doivent pas pouvoir s'accorder eux-mêmes des droits.</p></div></section>
-</div><section id="recordDetail" hidden aria-label="Fiche détaillée imprimable"><div class="detail-header"><h2 id="detailTitle">Fiche de contrôle</h2><div class="no-print"><button type="button" id="printDetail">Imprimer / PDF</button><button type="button" id="closeDetail" class="secondary">Fermer</button></div></div><p class="print-only">ADKOUL — Contrôle et maintenance des véhicules</p><div id="detailBody"></div><p class="muted">Document généré depuis les informations enregistrées dans Supabase. Les champs non renseignés sont indiqués comme tels.</p></section></main><footer>ADKOUL • Application indépendante • Version 2.0 — préparation sécurisée départ / retour</footer>
+</div><section id="recordDetail" hidden aria-label="Fiche détaillée imprimable"><div class="detail-header"><h2 id="detailTitle">Fiche de contrôle</h2><div class="no-print"><button type="button" id="printDetail">Imprimer / PDF</button><button type="button" id="closeDetail" class="secondary">Fermer</button></div></div><p class="print-only">ADKOUL — Contrôle et maintenance des véhicules</p><div id="detailBody"></div><p class="muted">Document généré depuis les informations enregistrées dans Supabase. Les champs non renseignés sont indiqués comme tels.</p></section></main><footer>ADKOUL • Application indépendante • Version 20 — anomalies et suivi carburant</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 'use strict';
@@ -144,7 +149,7 @@ async function load(){if(!session)return;msg('Chargement des données…');try{
 const results=await Promise.allSettled(['vehicules','controles','reparations','vidanges'].map(readTable));const [v,c,r,o]=results.map(x=>x.status==='fulfilled'?x.value:[]);const erreurs=results.map((x,i)=>x.status==='rejected'?['vehicules','controles','reparations','vidanges'][i]:null).filter(Boolean);
 vehicles=v;histories={controles:c,reparations:r,vidanges:o};
 $('sVehicles').textContent=v.length;$('sControls').textContent=c.length;$('sRepairs').textContent=r.length;$('sOil').textContent=o.length;
-renderVehicles();renderHistory();renderAlerts();refreshMissionLink();await loadUsers();msg(erreurs.length?'Acces limite : lecture refusee pour '+erreurs.join(', ')+'.':'Donnees chargees depuis Supabase.',erreurs.length>0);
+renderVehicles();renderHistory();renderAlerts();renderAnomalies();renderFuel();refreshMissionLink();await loadUsers();msg(erreurs.length?'Acces limite : lecture refusee pour '+erreurs.join(', ')+'.':'Donnees chargees depuis Supabase.',erreurs.length>0);
 }catch(e){displayError(e,'Lecture Supabase impossible');}}
 function vehicleName(v){return v.immatriculation||v.numero_immatriculation||v.id}
 function vehicleKm(v){return Number(v.kilometrage_actuel??v.kilometrage??0)}
@@ -154,6 +159,51 @@ const tb=$('vehiclesRows');tb.replaceChildren();document.querySelectorAll('.vehi
 vehicles.forEach(v=>{const tr=document.createElement('tr');cell(tr,vehicleName(v)+(openDepartures(v.id).length?' • EN MISSION':' • DISPONIBLE'));cell(tr,v.marque_modele||v.modele||'—');cell(tr,vehicleKm(v));cell(tr,vehicleOil(v)==null?'Non renseignée':vehicleOil(v)+3000);const td=cell(tr,'');const b=document.createElement('button');b.className='secondary';b.textContent='Modifier';b.hidden=!hasPermission('gerer_vehicules');b.onclick=()=>{const f=$('vehicleForm');for(const k of ['immatriculation','marque_modele','kilometrage_actuel','kilometrage_derniere_vidange'])if(f.elements.namedItem(k))f.elements.namedItem(k).value=v[k]??'';f.dataset.editId=v.id;activate('vehicles');f.scrollIntoView({behavior:'smooth'})};td.append(b);tb.append(tr)});
 }
 function renderAlerts(){const root=$('alerts');root.replaceChildren();if(!vehicles.length){root.textContent='Aucun véhicule enregistré.';return}vehicles.forEach(v=>{const p=document.createElement('p'),oil=vehicleOil(v),km=vehicleKm(v);p.textContent=vehicleName(v)+' — '+(oil==null?'Dernière vidange à renseigner':oil+3000<=km?'VIDANGE ÉCHUE ('+(km-oil-3000)+' km de dépassement)': 'Prochaine vidange dans '+(oil+3000-km)+' km');if(oil!=null&&oil+3000<=km)p.className='error';root.append(p)})}
+function questionnaireAnswers(record){
+ let q=record?.questionnaire;
+ if(typeof q==='string'){try{q=JSON.parse(q)}catch{return []}}
+ return Array.isArray(q?.reponses)?q.reponses:Array.isArray(q)?q:[];
+}
+function renderAnomalies(){
+ const summary=$('anomalySummary'),root=$('anomalyList');root.replaceChildren();
+ const items=[];
+ for(const c of histories.controles||[]){
+  for(const a of questionnaireAnswers(c))if(String(a?.reponse||'').toLowerCase()==='non')items.push({c,a});
+ }
+ summary.textContent=items.length+' anomalie(s) signalée(s) dans '+(histories.controles||[]).length+' contrôle(s) accessible(s).';
+ if(!items.length){const p=document.createElement('p');p.className='anomaly-empty';p.textContent='Aucune anomalie signalée dans les contrôles accessibles.';root.append(p);return}
+ items.sort((a,b)=>Number(b.c.id)-Number(a.c.id));
+ items.forEach(({c,a})=>{
+  const div=document.createElement('div');div.className='anomaly-item';
+  const title=document.createElement('strong');title.textContent='🔴 '+labelVehicle(c.vehicule_id)+' — '+(c.type_controle==='DEPART'?'Départ':'Retour')+' n° '+c.id;
+  const p=document.createElement('p');p.textContent=String(a.question||'Question non renseignée');
+  const detail=document.createElement('p');detail.textContent='Défaut constaté : '+(a.defaut||'Non précisé');
+  const small=document.createElement('small');small.className='muted';small.textContent=dateFR(c.cree_le);
+  const btn=document.createElement('button');btn.className='secondary';btn.type='button';btn.textContent='Consulter la fiche';btn.onclick=()=>showRecord('controles',c);
+  div.append(title,p,detail,small,document.createElement('div'),btn);root.append(div);
+ });
+}
+function renderFuel(){
+ const rows=$('fuelRows'),summary=$('fuelSummary');rows.replaceChildren();
+ const controls=histories.controles||[];
+ const byId=new Map(controls.map(c=>[String(c.id),c]));
+ const trips=controls.filter(c=>c.type_controle==='RETOUR'&&c.controle_depart_id!=null)
+  .map(r=>({r,d:byId.get(String(r.controle_depart_id))})).filter(x=>x.d&&String(x.d.vehicule_id)===String(x.r.vehicule_id));
+ let totalKm=0,estimated=0,estimable=0;
+ for(const {d,r} of trips){
+  const km=Number(r.kilometrage)-Number(d.kilometrage),start=Number(d.carburant_litres),end=Number(r.carburant_litres);
+  const valid=Number.isFinite(km)&&km>=0&&Number.isFinite(start)&&Number.isFinite(end)&&d.carburant_litres!=null&&r.carburant_litres!=null;
+  const difference=valid?start-end:null;
+  const canEstimate=valid&&km>0&&difference>=0;
+  if(valid)totalKm+=km;
+  if(canEstimate){estimated+=difference;estimable++}
+  const tr=document.createElement('tr');
+  [labelVehicle(r.vehicule_id),'#'+d.id+' / #'+r.id,valid?km+' km':'Données incohérentes',d.carburant_litres==null?'—':start.toFixed(1)+' L',r.carburant_litres==null?'—':end.toFixed(1)+' L',valid?(difference>=0?difference.toFixed(1)+' L':'+'+(-difference).toFixed(1)+' L (hausse)'):'—',canEstimate?(100*difference/km).toFixed(1)+' L/100 km (indicatif)':'Non calculable'].forEach(t=>cell(tr,t));
+  rows.append(tr);
+ }
+ summary.textContent=trips.length+' mission(s) clôturée(s) avec départ et retour accessibles • '+totalKm+' km relevés • '+estimable+' estimation(s) possible(s).';
+ if(!trips.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent='Aucune paire départ / retour accessible pour le calcul.';tr.append(td);rows.append(tr)}
+}
 function labelVehicle(id){const v=vehicles.find(x=>String(x.id)===String(id));return v?vehicleName(v):'Véhicule #'+id}
 function dateFR(v){if(!v)return 'Non renseigné';const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}
 function readable(v){return v===null||v===undefined||v===''?'Non renseigné':String(v)}
