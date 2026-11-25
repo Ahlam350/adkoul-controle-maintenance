@@ -665,7 +665,7 @@ h2,h3{color:#07376a!important}
 <p id="notice" role="status"></p>
 <section id="dashboard" class="panel"><div class="grid">
 <div class="stat">Véhicules<b id="sVehicles">—</b></div><div class="stat">Contrôles<b id="sControls">—</b></div><div class="stat">Réparations<b id="sRepairs">—</b></div><div class="stat">Vidanges<b id="sOil">—</b></div>
-</div><div class="v5-chart"><div class="card"><h2>Activité du parc</h2><p class="muted">Synthèse des opérations enregistrées</p><div id="v5Activity" class="v5-bars" role="img" aria-label="Répartition des opérations"></div></div><div class="card"><h2>Situation des véhicules</h2><p class="muted">État actuel du parc</p><div id="v5Fleet" class="v5-bars" role="img" aria-label="Véhicules disponibles et en mission"></div></div></div><div class="v17-bottom"><div class="card v17-breakdown"><h2>Répartition des opérations</h2><div class="v17-breakdown-inner"><div class="v17-donut" id="v17Donut" role="img" aria-label="Répartition des contrôles, réparations et vidanges"><div><strong id="v17Total">—</strong><small>Opérations</small></div></div><div class="v17-legend"><div><i class="v17-dot blue"></i>Contrôles : <strong id="v17Controls">—</strong></div><div><i class="v17-dot orange"></i>Réparations : <strong id="v17Repairs">—</strong></div><div><i class="v17-dot green"></i>Vidanges : <strong id="v17Oils">—</strong></div></div></div></div><div class="card v17-alerts"><h2>Alertes vidange</h2><p class="v17-alert-desc">Échéance indicative calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div></div></section>
+</div><div class="v5-chart"><div class="card"><h2>Activité du parc</h2><p class="muted">Synthèse des opérations enregistrées</p><div id="v5Activity" class="v5-bars" role="img" aria-label="Répartition des opérations"></div></div><div class="card"><h2>Situation des véhicules</h2><p class="muted">État actuel du parc</p><div id="v5Fleet" class="v5-bars" role="img" aria-label="Véhicules disponibles et en mission"></div></div></div><div class="v17-bottom"><div class="card v17-breakdown"><h2>Répartition des opérations</h2><div class="v17-breakdown-inner"><div class="v17-donut" id="v17Donut" role="img" aria-label="Répartition des contrôles, réparations et vidanges"><div><strong id="v17Total">—</strong><small>Opérations</small></div></div><div class="v17-legend"><div><i class="v17-dot blue"></i>Contrôles : <strong id="v17Controls">—</strong></div><div><i class="v17-dot orange"></i>Réparations : <strong id="v17Repairs">—</strong></div><div><i class="v17-dot green"></i>Vidanges : <strong id="v17Oils">—</strong></div></div></div></div><div class="card v17-alerts"><h2>Alertes vidange</h2><p class="v17-alert-desc">Échéance indicative calculée à 3 000 km après la dernière vidange renseignée.</p><div id="alerts"></div></div></div><div class="card"><h2>🛡️ Aptitude au départ — V22</h2><p class="muted">Disponibilité administrative et aptitude à circuler sont deux notions différentes.</p><div id="v22FleetSafety">Contrôle de sécurité en cours…</div></div></section>
 <section id="vehicles" class="panel" hidden><div class="card"><h2>Ajouter / modifier un véhicule</h2><form id="vehicleForm">
 <div class="grid"><div><label>Immatriculation *</label><input name="immatriculation" required></div><div><label>Marque / modèle *</label><input name="marque_modele" required></div><div><label>Kilométrage actuel *</label><input name="kilometrage_actuel" type="number" min="0" step="1" required></div><div><label>Dernière vidange (km)</label><input name="kilometrage_derniere_vidange" type="number" min="0" step="1"></div></div>
 <button type="submit">Enregistrer le véhicule</button><button type="reset" class="secondary">Effacer</button></form></div><div class="card"><h2>Parc automobile</h2><div class="tablewrap"><table><thead><tr><th>Immatriculation</th><th>Modèle</th><th>Kilométrage</th><th>Vidange à</th><th>Action</th></tr></thead><tbody id="vehiclesRows"></tbody></table></div></div></section>
@@ -679,7 +679,9 @@ h2,h3{color:#07376a!important}
 <div><label>Carburant (litres) *</label><input name="carburant_litres" type="number" min="0" step="0.1" required></div></div>
 <div id="vehicleMissionStatus" class="mission-status" aria-live="polite"></div><div class="question-intro"><div><strong>Liste de vérification</strong><p class="muted">Répondez à chaque point. Pour une réponse « Non », décrivez le défaut constaté.</p></div><div class="progress-text" id="questionProgress" aria-live="polite">0 / 0 complété</div></div><div class="progress-track"><div id="progressBar"></div></div><div class="question-legend"><span class="legend-good">● Oui : conforme</span><span class="legend-bad">● Non : anomalie</span><span class="legend-na">● N/A : non applicable</span></div><div id="questionSummary" class="question-summary" aria-live="polite">Aucune réponse renseignée pour le moment.</div><div id="questions"></div><label>Observations complémentaires</label><textarea name="observations"></textarea>
 <p><button type="submit">Enregistrer le questionnaire</button></p></form></div></section>
-<section id="anomalies" class="panel" hidden><div class="card"><h2>🔴 Anomalies et réparations à suivre</h2><p class="v20-caution">Défauts issus des contrôles accessibles. Les anomalies historiques sont à vérifier : un contrôle ultérieur conforme ne prouve pas qu'une réparation a été effectuée. Le blocage automatique des départs n'est pas encore activé dans Supabase.</p><div id="v20Anomalies" aria-live="polite"></div></div></section>
+<section id="anomalies" class="panel" hidden><div class="card"><h2>🔴 Anomalies et réparations à suivre</h2><p class="v20-caution">Défauts issus des contrôles accessibles. Les anomalies historiques sont à vérifier : un contrôle ultérieur conforme ne prouve pas qu'une réparation a été effectuée. V22 : les départs sont bloqués en présence d’une anomalie ouverte, après installation du script SQL. Les clôtures exigent une réparation documentée et la validation de l’administrateur.</p><div id="v22Status" class="v20-caution">Vérification du registre V22…</div><div id="v22Register"></div><div id="v20Anomalies" aria-live="polite"></div>
+<div id="v22CloseCard" class="card" hidden><h3>🔐 Vérifier et clôturer une anomalie</h3><p class="muted">Réservé à l’administrateur principal. Une réparation réellement enregistrée, concernant le même véhicule, est obligatoire. La clôture n’efface jamais le constat d’origine.</p>
+<form id="v22CloseForm"><div class="grid"><div><label>Anomalie ouverte *</label><select id="v22AnomalyId" required></select></div><div><label>Réparation correspondante *</label><select id="v22RepairId" required></select></div></div><label>Justification de vérification (15 caractères minimum) *</label><textarea id="v22Justification" required minlength="15" placeholder="Décrivez les travaux, la vérification et le résultat constaté"></textarea><p><button type="submit">Valider la clôture après vérification</button></p></form></div></div></section>
 <section id="fuel" class="panel" hidden><div class="card"><h2>⛽ Consommation carburant par trajet</h2><p class="v20-caution">Estimation indicative seulement, à partir des relevés de carburant au départ et au retour. Les ravitaillements intermédiaires ne sont pas comptabilisés. Pour une mesure fiable, utiliser la méthode plein à plein avec volumes ravitaillés.</p><div id="v20Fuel" aria-live="polite"></div></div></section>
 <section id="repairs" class="panel" hidden><div class="card"><h2>Enregistrer une réparation</h2><form id="repairForm">
 <div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_reparation" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Garage</label><input name="garage"></div><div><label>Montant FCFA</label><input name="montant_fcfa" type="number" min="0"></div><div><label>N° facture</label><input name="numero_facture"></div></div>
@@ -697,7 +699,7 @@ h2,h3{color:#07376a!important}
 <section id="users" class="panel" hidden><div class="card"><h2>Utilisateurs et permissions</h2><p class="muted">Les comptes d'authentification doivent être créés dans Supabase Auth ou par un service serveur sécurisé. Ne jamais intégrer une clé secrète d'administration dans cette page.</p><div id="userList"></div><div id="v5Permissions" aria-live="polite"></div>
 <h3>Attribuer une permission à un utilisateur existant</h3><form id="permissionForm"><div class="grid"><div><label>Profil *</label><select id="permissionUser" name="utilisateur_id" required></select></div><div><label>Permission *</label><select id="permissionName" name="permission" required></select></div><div><label>Décision</label><select name="autorise"><option value="true">Autoriser</option><option value="false">Refuser</option></select></div></div><button type="submit">Enregistrer la permission</button></form>
 <p class="muted">Cette opération dépend des politiques RLS de la table <code>autorisations</code>. Les profils non administrateurs ne doivent pas pouvoir s'accorder eux-mêmes des droits.</p></div></section>
-</div><section id="recordDetail" hidden aria-label="Fiche détaillée imprimable"><div class="detail-header"><h2 id="detailTitle">Fiche de contrôle</h2><div class="no-print"><button type="button" id="printDetail">Imprimer / PDF</button><button type="button" id="closeDetail" class="secondary">Fermer</button></div></div><p class="print-only">ADKOUL — Contrôle et maintenance des véhicules</p><div id="detailBody"></div><p class="muted">Document généré depuis les informations enregistrées dans Supabase. Les champs non renseignés sont indiqués comme tels.</p></section></main><footer>ADKOUL • Application indépendante • V19 — questionnaire optimisé</footer>
+</div><section id="recordDetail" hidden aria-label="Fiche détaillée imprimable"><div class="detail-header"><h2 id="detailTitle">Fiche de contrôle</h2><div class="no-print"><button type="button" id="printDetail">Imprimer / PDF</button><button type="button" id="closeDetail" class="secondary">Fermer</button></div></div><p class="print-only">ADKOUL — Contrôle et maintenance des véhicules</p><div id="detailBody"></div><p class="muted">Document généré depuis les informations enregistrées dans Supabase. Les champs non renseignés sont indiqués comme tels.</p></section></main><footer>ADKOUL • Application indépendante • V22 — sécurité des départs</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 'use strict';
@@ -729,7 +731,7 @@ async function load(){if(!session)return;msg('Chargement des données…');try{
 const results=await Promise.allSettled(['vehicules','controles','reparations','vidanges'].map(readTable));const [v,c,r,o]=results.map(x=>x.status==='fulfilled'?x.value:[]);const erreurs=results.map((x,i)=>x.status==='rejected'?['vehicules','controles','reparations','vidanges'][i]:null).filter(Boolean);
 vehicles=v;histories={controles:c,reparations:r,vidanges:o};
 $('sVehicles').textContent=v.length;$('sControls').textContent=c.length;$('sRepairs').textContent=r.length;$('sOil').textContent=o.length;
-renderVehicles();renderHistory();renderAlerts();renderV5Charts();renderV20();renderOilV20();await loadV21();refreshMissionLink();await loadUsers();msg(erreurs.length?'Acces limite : lecture refusee pour '+erreurs.join(', ')+'.':'Donnees chargees depuis Supabase.',erreurs.length>0);
+renderVehicles();renderHistory();renderAlerts();renderV5Charts();renderV20();renderOilV20();await loadV21();await loadV22();refreshMissionLink();await loadUsers();msg(erreurs.length?'Acces limite : lecture refusee pour '+erreurs.join(', ')+'.':'Donnees chargees depuis Supabase.',erreurs.length>0);
 }catch(e){displayError(e,'Lecture Supabase impossible');}}
 function vehicleName(v){return v.immatriculation||v.numero_immatriculation||v.id}
 function vehicleKm(v){return Number(v.kilometrage_actuel??v.kilometrage??0)}
@@ -900,6 +902,7 @@ $('inspectionForm').onsubmit=async e=>{
  if(!hasPermission(phase==='depart'?'enregistrer_depart':'enregistrer_retour'))return msg('Permission de contrôle non accordée.',true);
  const opens=openDepartures(vehicleId);let departure=null;
  if(phase==='depart'&&opens.length)return msg('Départ refusé : ce véhicule possède déjà un départ non clôturé.',true);
+ if(phase==='depart'&&(!v22Ready||v22Anomalies.some(a=>String(a.vehicule_id)===String(vehicleId)&&a.statut==='OUVERTE'&&a.criticite==='BLOQUANTE')))return msg('Départ refusé : sécurité V22 indisponible ou anomalie bloquante ouverte.',true);
  if(phase==='retour'){
   departure=opens.find(d=>String(d.id)===val(f,'controle_depart_id'));
   if(!departure)return msg('Retour refusé : sélectionnez un départ ouvert du même véhicule.',true);
@@ -987,6 +990,50 @@ $('v21ExportCSV').onclick=()=>{const d=v21ReportData();const rows=[Object.keys(d
 $('v21Print').onclick=()=>window.print();
 $('v21ReferenceForm').onsubmit=async e=>{e.preventDefault();if(!v21Ready||!hasPermission('gerer_vidanges'))return msg('Gestion des références non autorisée ou tables V21 indisponibles.',true);const f=e.target,id=Number(val(f,'vehicule_id')),v=vehicles.find(x=>Number(x.id)===id),km=num(f,'km_reference');if(!v||km>vehicleKm(v))return msg('Vérifiez le véhicule et le kilométrage de référence.',true);const payload={vehicule_id:id,date_reference:val(f,'date_reference')||null,km_reference:km,intervalle_km:num(f,'intervalle_km'),intervalle_mois:num(f,'intervalle_mois'),alerte_km:num(f,'alerte_km'),alerte_jours:num(f,'alerte_jours'),source:val(f,'source')||null};if(!confirm('Enregistrer cette référence historique sans créer de vidange ?'))return;try{const {error}=await sb.from('references_vidange').upsert(payload,{onConflict:'vehicule_id'});if(error)throw error;await load();msg('Référence historique enregistrée.')}catch(err){displayError(err,'Référence non enregistrée')}};
 $('v21ServiceForm').onsubmit=async e=>{e.preventDefault();if(!v21Ready||!hasPermission('gerer_reparations'))return msg('Gestion des entretiens non autorisée ou tables V21 indisponibles.',true);const f=e.target,id=Number(val(f,'vehicule_id')),v=vehicles.find(x=>Number(x.id)===id),km=num(f,'kilometrage');if(!v||km>vehicleKm(v))return msg('Kilométrage incohérent avec le véhicule.',true);const payload={vehicule_id:id,type_entretien:val(f,'type_entretien'),date_entretien:val(f,'date_entretien'),kilometrage:km,description:val(f,'description'),garage:val(f,'garage')||null,cout:num(f,'cout'),numero_facture:val(f,'numero_facture')||null,lien_facture:val(f,'lien_facture')||null};if(!confirm('Confirmer cette intervention réellement effectuée ?'))return;try{const {error}=await sb.from('entretiens').insert(payload);if(error)throw error;f.reset();await load();msg('Entretien enregistré dans Supabase.')}catch(err){displayError(err,'Entretien non enregistré')}};
+
+/* V22 : registre de securite, aucune ecriture directe des anomalies. */
+let v22Ready=false,v22Anomalies=[];
+async function loadV22(){
+ const status=$('v22Status');v22Ready=false;v22Anomalies=[];
+ try{
+  const {data,error}=await sb.from('anomalies_securite').select('id,vehicule_id,controle_id,question,description,criticite,statut,cree_le,cloture_le,justification_cloture,reparation_id').order('id',{ascending:true});
+  if(error)throw error;
+  v22Ready=true;v22Anomalies=data||[];
+  status.textContent='V22 connecté à Supabase : registre de sécurité actif. Le déclencheur de blocage doit aussi être vérifié dans Supabase.';
+ }catch(e){status.textContent='V22 non accessible : aucun départ ne sera autorisé depuis cette interface tant que le registre ne peut pas être vérifié. '+errText(e);}
+ renderV22();
+}
+function renderV22(){
+ const root=$('v22Register'),fleet=$('v22FleetSafety');root.replaceChildren();fleet.replaceChildren();
+ for(const v of vehicles){
+  const list=v22Anomalies.filter(a=>String(a.vehicule_id)===String(v.id)&&a.statut==='OUVERTE'&&a.criticite==='BLOQUANTE');
+  const p=document.createElement('p');p.textContent=vehicleName(v)+' — '+(!v22Ready?'⚪ Statut inconnu : contrôle impossible':list.length?'🔴 Départ bloqué ('+list.length+' anomalie(s) ouverte(s))':'🟢 Aucun blocage V22 ouvert');fleet.append(p);
+ }
+ if(!v22Ready){root.textContent='Registre non accessible. N’utilisez pas cette interface pour autoriser un départ.';}
+ else if(!v22Anomalies.length){root.textContent='Aucune anomalie dans le registre V22.';}
+ else for(const a of v22Anomalies){
+  const article=document.createElement('article');article.className='v20-record'+(a.statut==='OUVERTE'?' critical':'');
+  const h=document.createElement('h3');h.textContent=(a.statut==='OUVERTE'?'🔴 OUVERTE — ':'🟢 CLÔTURÉE — ')+labelVehicle(a.vehicule_id)+' · '+a.question;article.append(h);
+  const desc=document.createElement('p');desc.textContent='Contrôle n° '+a.controle_id+' · '+a.criticite+' · '+(a.description||'Description non renseignée');article.append(desc);
+  if(a.statut==='CLOTUREE'){const proof=document.createElement('p');proof.textContent='Réparation n° '+a.reparation_id+' · Vérification : '+(a.justification_cloture||'')+' · '+dateFR(a.cloture_le);article.append(proof)}
+  root.append(article);
+ }
+ const form=$('v22CloseForm'),box=$('v22CloseCard'),as=$('v22AnomalyId'),rs=$('v22RepairId');box.hidden=!profile?.administrateur_principal||!v22Ready;
+ const old=as.value;as.replaceChildren();const placeholder=opt('Sélectionner une anomalie ouverte');placeholder.value='';as.append(placeholder);
+ v22Anomalies.filter(a=>a.statut==='OUVERTE').forEach(a=>{const o=opt('#'+a.id+' — '+labelVehicle(a.vehicule_id)+' — '+a.question);o.value=a.id;as.append(o)});
+ if([...as.options].some(o=>o.value===old))as.value=old;
+ const fillRepairs=()=>{const a=v22Anomalies.find(x=>String(x.id)===as.value),oldRep=rs.value;rs.replaceChildren();const o=opt('Sélectionner une réparation enregistrée');o.value='';rs.append(o);(histories.reparations||[]).filter(r=>a&&String(r.vehicule_id)===String(a.vehicule_id)).forEach(r=>{const x=opt('Réparation #'+r.id+' · '+(r.date_reparation||'date inconnue')+' · '+(r.description||''));x.value=r.id;rs.append(x)});if([...rs.options].some(x=>x.value===oldRep))rs.value=oldRep};
+ as.onchange=fillRepairs;fillRepairs();
+}
+$('v22CloseForm').onsubmit=async e=>{
+ e.preventDefault();if(!v22Ready||!profile?.administrateur_principal)return msg('Clôture non autorisée.',true);
+ const id=Number($('v22AnomalyId').value),rep=Number($('v22RepairId').value),justification=$('v22Justification').value.trim();
+ if(!id||!rep||justification.length<15)return msg('Choisissez une anomalie, une réparation et une justification détaillée.',true);
+ if(!confirm('Confirmez-vous que la réparation a été vérifiée et que le défaut est réellement résolu ?'))return;
+ const btn=e.target.querySelector('button[type=submit]');btn.disabled=true;
+ try{const {error}=await sb.rpc('v22_cloturer_anomalie',{p_anomalie_id:id,p_reparation_id:rep,p_justification:justification});if(error)throw error;e.target.reset();await load();msg('Anomalie clôturée après vérification dans Supabase.');}
+ catch(err){displayError(err,'Clôture V22 refusée');}finally{btn.disabled=false}
+};
 
 /* V20 : lecture seule des contrôles existants. Aucune table supplémentaire requise. */
 function renderV20(){
