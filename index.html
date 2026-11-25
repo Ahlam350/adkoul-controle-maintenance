@@ -1,81 +1,101 @@
-# ADKOUL V23.2 - Générer un index.html complet et valide depuis la version GitHub.
-# Windows PowerShell 5.1 - aucune modification de GitHub ou Supabase.
+# ADKOUL V23.2 - Restauration depuis sauvegarde V23 verifiee et correction CSS.
+# Windows PowerShell 5.1. Ne publie rien et ne touche pas a Supabase.
 $ErrorActionPreference = 'Stop'
-$downloads = Join-Path $env:USERPROFILE 'Downloads'
-$folder = Join-Path $downloads 'ADKOUL_V23_2_HTML_CORRIGE'
-New-Item -ItemType Directory -Force -Path $folder | Out-Null
-$source = Join-Path $folder 'index_SOURCE_AVANT_CORRECTION.html'
-$output = Join-Path $folder 'index.html'
-$url = 'https://raw.githubusercontent.com/Ahlam350/adkoul-controle-maintenance/main/index.html'
-Invoke-WebRequest -Uri $url -OutFile $source -UseBasicParsing
-$utf8 = New-Object System.Text.UTF8Encoding($false)
-$html = [System.IO.File]::ReadAllText($source, $utf8)
-if (-not $html.TrimStart().StartsWith('<!doctype html>',[System.StringComparison]::OrdinalIgnoreCase)) { throw 'ERREUR : la source ne commence pas par un document HTML.' }
-foreach ($required in @('id="repairForm"','v23RepairAnomalyList','v22_cloturer_anomalie','ADKOUL-ANOMALIES-V23','</style>','</html>')) {
- if (-not $html.Contains($required)) { throw "ERREUR : fonctionnalite attendue absente : $required" }
-}
-$css = @'
-/* ADKOUL V23.2 - FIX CASES ANOMALIES : regles limitees a la liste des reparations */
+& {
+    $downloads = Join-Path $env:USERPROFILE 'Downloads'
+    $expected = 'F43CB04C73E1EECE29F5CF3D76AF50A0773A6C2006C3C425C0280D63B84DCC2B'
+    $candidateNames = @('index (7).html', 'index_SOURCE_GITHUB_V23.html', 'index_ADKOUL_V23_REPARATIONS.html')
+    $source = $null
+    foreach ($name in $candidateNames) {
+        $path = Join-Path $downloads $name
+        if (Test-Path -LiteralPath $path -PathType Leaf) {
+            if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -eq $expected) {
+                $source = $path
+                break
+            }
+        }
+    }
+    if (-not $source) {
+        throw 'Sauvegarde V23 verifiee introuvable. Aucun fichier genere. Conserver index (7).html si disponible.'
+    }
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    $html = [System.IO.File]::ReadAllText($source, $utf8)
+    if (-not $html.TrimStart([char]0xFEFF, [char]32, [char]13, [char]10, [char]9).StartsWith('<!doctype html', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'La sauvegarde verifiee ne commence pas par <!doctype html>.'
+    }
+    foreach ($token in @('id="repairForm"', 'v23RepairAnomalyList', 'ADKOUL-ANOMALIES-V23', 'v22_cloturer_anomalie', 'anomalies_securite')) {
+        if (-not $html.Contains($token)) { throw "Fonction manquante : $token" }
+    }
+    $css = @'
+/* ADKOUL V23.2 - Correctif strict des cases a cocher des anomalies */
 #v23RepairAnomalyList label {
- display: flex !important;
- flex-direction: row !important;
- align-items: flex-start !important;
- justify-content: flex-start !important;
- gap: 12px !important;
- width: 100% !important;
- min-height: 0 !important;
- text-align: left !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    text-align: left !important;
 }
-#v23RepairAnomalyList label input[type="checkbox"] {
- appearance: auto !important;
- -webkit-appearance: checkbox !important;
- display: inline-block !important;
- position: static !important;
- float: none !important;
- transform: none !important;
- flex: 0 0 18px !important;
- box-sizing: border-box !important;
- width: 18px !important;
- height: 18px !important;
- min-width: 18px !important;
- max-width: 18px !important;
- min-height: 18px !important;
- max-height: 18px !important;
- padding: 0 !important;
- margin: 2px 0 0 !important;
- border-radius: 3px !important;
+#v23RepairAnomalyList label > input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+    display: block !important;
+    position: static !important;
+    float: none !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    margin: 3px 0 0 !important;
+    padding: 0 !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
 }
 #v23RepairAnomalyList label > span {
- display: block !important;
- flex: 1 1 auto !important;
- min-width: 0 !important;
- width: auto !important;
- position: static !important;
- float: none !important;
- text-align: left !important;
- overflow-wrap: anywhere !important;
+    display: block !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+    position: static !important;
+    float: none !important;
+    text-align: left !important;
+    overflow-wrap: anywhere !important;
 }
 #v23RepairAnomalyList label > span strong,
 #v23RepairAnomalyList label > span small {
- display: block !important;
- text-align: left !important;
+    display: block !important;
+    text-align: left !important;
 }
 '@
-# Idempotence : ne pas empiler les correctifs si le script est rejoue.
-$begin = '/* ADKOUL V23.2 - FIX CASES ANOMALIES'
-if ($html.Contains($begin)) { throw 'Le correctif V23.2 est deja present dans la source : arret pour eviter une double insertion.' }
-$pos = $html.IndexOf('</style>',[System.StringComparison]::OrdinalIgnoreCase)
-if ($pos -lt 0) { throw 'Balise de fermeture CSS introuvable.' }
-$html = $html.Insert($pos, "`r`n" + $css + "`r`n")
-[System.IO.File]::WriteAllText($output,$html,$utf8)
-$check = [System.IO.File]::ReadAllText($output,$utf8)
-foreach ($required in @('<!doctype html>','id="repairForm"','v23RepairAnomalyList','v22_cloturer_anomalie','ADKOUL-ANOMALIES-V23','ADKOUL V23.2 - FIX CASES ANOMALIES','</html>')) {
- if (-not $check.Contains($required)) { throw "ERREUR de validation : $required" }
+    $endStyle = $html.IndexOf('</style>', [System.StringComparison]::OrdinalIgnoreCase)
+    if ($endStyle -lt 0) { throw 'Balise </style> introuvable.' }
+    $html = $html.Insert($endStyle, "`r`n" + $css + "`r`n")
+    $outdir = Join-Path $downloads 'ADKOUL_V23_2_HTML_CORRIGE'
+    [void](New-Item -ItemType Directory -Path $outdir -Force)
+    $out = Join-Path $outdir 'index.html'
+    if (Test-Path -LiteralPath $out) {
+        $old = Join-Path $outdir ('index_AVANT_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.html')
+        Copy-Item -LiteralPath $out -Destination $old
+    }
+    [System.IO.File]::WriteAllText($out, $html, $utf8)
+    $readback = [System.IO.File]::ReadAllText($out, $utf8)
+    if (-not $readback.StartsWith('<!doctype html', [System.StringComparison]::OrdinalIgnoreCase)) { throw 'Fichier genere invalide : DOCTYPE absent.' }
+    foreach ($token in @('id="repairForm"', 'v23RepairAnomalyList', 'ADKOUL-ANOMALIES-V23', 'v22_cloturer_anomalie', 'ADKOUL V23.2 - Correctif strict')) {
+        if (-not $readback.Contains($token)) { throw "Controle final echoue : $token" }
+    }
+    if ($readback.Length -lt 150000) { throw 'Fichier anormalement court : installation interdite.' }
+    Write-Host 'SOURCE V23 VERIFIEE :' $source -ForegroundColor Green
+    Write-Host 'SOURCE SHA256 :' $expected
+    Write-Host 'INDEX HTML COMPLET :' $out -ForegroundColor Green
+    Write-Host 'TAILLE CARACTERES :' $readback.Length
+    Write-Host 'SHA256 CANDIDAT :' (Get-FileHash -LiteralPath $out -Algorithm SHA256).Hash
+    Write-Host 'VALIDATION HTML ET FONCTIONS : OK' -ForegroundColor Green
+    Write-Host 'GitHub et Supabase non modifies.'
 }
-if ($check.Length -lt 150000) { throw 'ERREUR : fichier HTML anormalement court.' }
-Write-Host 'OK : INDEX.HTML COMPLET GENERE' -ForegroundColor Green
-Write-Host "SOURCE SAUVEGARDEE : $source"
-Write-Host "FICHIER A PUBLIER : $output"
-Write-Host 'SHA256 SOURCE :' (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
-Write-Host 'SHA256 CORRIGE :' (Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash
-Write-Host 'GITHUB ET SUPABASE NON MODIFIES'
