@@ -732,7 +732,7 @@ h2,h3{color:#07376a!important}
 <section id="fuel" class="panel" hidden><div class="card"><h2>⛽ Consommation carburant par trajet</h2><p class="v20-caution">Estimation indicative seulement, à partir des relevés de carburant au départ et au retour. Les ravitaillements intermédiaires ne sont pas comptabilisés. Pour une mesure fiable, utiliser la méthode plein à plein avec volumes ravitaillés.</p><div id="v20Fuel" aria-live="polite"></div></div></section>
 <section id="repairs" class="panel" hidden><div class="card"><h2>Enregistrer une réparation</h2><form id="repairForm">
 <div class="grid"><div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div><div><label>Date *</label><input name="date_reparation" type="date" required></div><div><label>Kilométrage *</label><input name="kilometrage" type="number" min="0" required></div><div><label>Garage</label><input name="garage"></div><div><label>Montant FCFA</label><input name="montant_fcfa" type="number" min="0"></div><div><label>N° facture</label><input name="numero_facture"></div></div>
-<div id="v23RepairAnomalies" class="card" style="margin:16px 0;border:1px solid #c8d9e7;background:#f5faff"><h3>🔧 Anomalies ouvertes à réparer</h3><p class="muted">Sélectionnez les défauts réellement concernés par cette intervention. Les autres restent ouverts. Une réparation ne clôture aucune anomalie.</p><div id="v23RepairAnomalyList" aria-live="polite">Sélectionnez un véhicule.</div><p class="muted" id="v23RepairAnomalyCount"></p></div><div class="upload-box"><label for="factureScan">📎 Joindre le scan de la facture (facultatif)</label><input id="factureScan" name="facture_scan" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"><small class="muted">PDF, JPG ou PNG • 10 Mo maximum • stockage privé. Le scan est lié à la réparation enregistrée.</small></div>
+<div id="v23RepairAnomalies" class="card" style="margin:16px 0;border:1px solid #c8d9e7;background:#f5faff"><h3>🔧 Anomalies ouvertes à réparer</h3><p class="muted">Sélectionnez les défauts réellement concernés par cette intervention. Les autres restent ouverts. Pour l’administrateur principal, les anomalies cochées sont clôturées après confirmation des travaux et acceptation par Supabase. Pour les autres utilisateurs, elles restent ouvertes pour validation.</p><div id="v23RepairAnomalyList" aria-live="polite">Sélectionnez un véhicule.</div><p class="muted" id="v23RepairAnomalyCount"></p></div><div class="upload-box"><label for="factureScan">📎 Joindre le scan de la facture (facultatif)</label><input id="factureScan" name="facture_scan" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"><small class="muted">PDF, JPG ou PNG • 10 Mo maximum • stockage privé. Le scan est lié à la réparation enregistrée.</small></div>
 <label>Travaux effectués *</label><textarea name="travaux" required></textarea><button type="submit">Enregistrer la réparation</button></form><p class="muted">Les factures sont stockées dans le bucket privé factures-reparations. Seuls les utilisateurs autorisés peuvent les consulter.</p></div></section>
 <section id="oil" class="panel" hidden><div class="card"><h2>🛢️ Suivi des vidanges par véhicule</h2>
 <p class="muted">Choisissez un véhicule pour consulter ses échéances et son historique. L'intervalle doit suivre les recommandations adaptées au véhicule ; aucune valeur de 3 000 km n'est imposée.</p>
@@ -994,6 +994,7 @@ function renderV23RepairAnomalies(){
  count.textContent=root.querySelectorAll('input[data-v23-anomaly]:checked').length+' anomalie(s) sélectionnée(s). Clôture réservée à l’administrateur.';
 }
 $('repairForm').elements.namedItem('vehicule_id').addEventListener('change',renderV23RepairAnomalies);
+/* ADKOUL V24 : clôture après réparation vérifiée */
 $('repairForm').onsubmit=async e=>{
  e.preventDefault();if(!hasPermission('gerer_reparations'))return msg('Permission réparations non accordée.',true);
  const f=e.target,btn=f.querySelector('button[type=submit]'),file=$('factureScan').files?.[0]||null;
@@ -1002,18 +1003,36 @@ $('repairForm').onsubmit=async e=>{
  const invalid=chosen.some(id=>!v22Anomalies.some(a=>Number(a.id)===id&&a.statut==='OUVERTE'&&String(a.vehicule_id)===val(f,'vehicule_id')));
  if(invalid)return msg('Sélection des anomalies invalide. Actualisez les données.',true);
  try{validateScan(file)}catch(e){return displayError(e,'Facture invalide')}
+ const autoClose=Boolean(profile?.administrateur_principal)&&chosen.length>0;
+ const travaux=val(f,'travaux').trim();
+ if(autoClose&&travaux.length<15)return msg('Décrivez les travaux effectués (15 caractères minimum).',true);
+ if(autoClose&&!confirm('Confirmez-vous que toutes les anomalies cochées ont réellement été réparées et vérifiées ?'))return;
  btn.disabled=true;
  try{
   const payload={vehicule_id:Number(val(f,'vehicule_id')),date_reparation:val(f,'date_reparation'),garage:val(f,'garage')||null,numero_facture:val(f,'numero_facture')||null,description:val(f,'travaux')+(chosen.length?'\n[ADKOUL-ANOMALIES-V23]'+chosen.join(',')+'[/ADKOUL-ANOMALIES-V23]':''),cout:num(f,'montant_fcfa')};
   const {data,error}=await sb.from('reparations').insert(payload).select('id').single();
   if(error)throw error;
+  const closed=[],failed=[];
+  if(autoClose){
+   for(const id of chosen){
+    try{
+     const {error:closeError}=await sb.rpc('v22_cloturer_anomalie',{p_anomalie_id:id,p_reparation_id:data.id,p_justification:'Travaux vérifiés : '+travaux});
+     if(closeError)throw closeError;
+     closed.push(id);
+    }catch(closeError){failed.push('#'+id+' : '+errText(closeError))}
+   }
+  }
+  let scanWarning='';
   if(file){
     try{await uploadRepairScan(data.id,file)}catch(uploadError){
-      msg('Réparation n° '+data.id+' enregistrée, mais scan non associé : '+errText(uploadError)+'. Utilisez « Ajouter un scan » dans Historique pour réessayer.',true);
-      await load();return;
+      scanWarning=' Scan non associé : '+errText(uploadError)+'. Utilisez « Ajouter un scan » dans Historique.';
     }
   }
-  f.reset();await load();msg('Réparation n° '+data.id+' enregistrée'+(file?' avec son scan privé.':'.'));
+  f.reset();
+  let refreshWarning='';
+  try{await load()}catch(err){refreshWarning=' Actualisation impossible : '+errText(err);}
+  const status=autoClose?' '+closed.length+'/'+chosen.length+' anomalie(s) clôturée(s).'+(failed.length?' Clôtures non confirmées : '+failed.join(' ; ')+'.':''):(chosen.length?' Anomalies sélectionnées conservées ouvertes pour validation administrative.':' Aucune anomalie clôturée.');
+  msg('Réparation n° '+data.id+' enregistrée.'+status+scanWarning+refreshWarning,Boolean(failed.length||scanWarning||refreshWarning));
  }catch(e){displayError(e,'Enregistrement de la réparation impossible')}
  finally{btn.disabled=false}
 };
