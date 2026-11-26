@@ -769,7 +769,7 @@ body.v26direction #notice{padding:6px 12px!important;margin:6px 0!important;font
 <section id="chauffeurs" class="panel" hidden><div class="card"><h2>Registre des chauffeurs</h2><div id="v32Body"></div></div></section><section id="inspection" class="panel" hidden><div class="card"><h2>Questionnaire de contrôle départ / retour</h2><form id="inspectionForm">
 <div class="grid"><div><label>Phase *</label><select name="phase" id="phase"><option value="depart">Avant départ</option><option value="retour">Au retour</option></select></div>
 <div><label>Véhicule *</label><select name="vehicule_id" class="vehiclePicker" required></select></div>
-<div id="linkedDepartureBox" hidden><label>Départ à clôturer *</label><select id="linkedDeparture" name="controle_depart_id"></select><small class="muted" id="linkedDepartureInfo">Sélectionnez un départ ouvert du même véhicule.</small></div><div><label>Nom du chauffeur *</label><input name="conducteur" required><small class="muted">Nom conservé dans le questionnaire ; aucun UUID inventé.</small></div>
+<div id="linkedDepartureBox" hidden><label>Départ à clôturer *</label><select id="linkedDeparture" name="controle_depart_id"></select><small class="muted" id="linkedDepartureInfo">Sélectionnez un départ ouvert du même véhicule.</small></div><div><label>Nom du chauffeur *</label><select id="v322Driver"><option value="">Sélectionner un chauffeur actif</option></select><input name="conducteur" required readonly hidden><small class="muted">Au retour, identité reprise du départ.</small></div>
 <div><label>Référence de mission</label><input name="reference_mission"></div>
 <div><label>Date et heure *</label><input name="date_controle" type="datetime-local" required></div>
 <div><label>Kilométrage relevé *</label><input name="kilometrage" type="number" min="0" step="1" required></div>
@@ -828,7 +828,7 @@ async function load(){if(!session)return;msg('Chargement des données…');try{
 const results=await Promise.allSettled(['vehicules','controles','reparations','vidanges'].map(readTable));const [v,c,r,o]=results.map(x=>x.status==='fulfilled'?x.value:[]);const erreurs=results.map((x,i)=>x.status==='rejected'?['vehicules','controles','reparations','vidanges'][i]:null).filter(Boolean);
 vehicles=v;histories={controles:c,reparations:r,vidanges:o};
 $('sVehicles').textContent=v.length;$('sControls').textContent=c.length;$('sRepairs').textContent=r.length;$('sOil').textContent=o.length;
-renderVehicles();renderHistory();renderAlerts();renderV5Charts();renderV20();renderOilV20();await loadV21();await loadV22();refreshMissionLink();await loadUsers();await v32Load();await v27Load();await v30Load();v26Render();msg(erreurs.length?'Acces limite : lecture refusee pour '+erreurs.join(', ')+'.':'Donnees chargees depuis Supabase.',erreurs.length>0);
+renderVehicles();renderHistory();renderAlerts();renderV5Charts();renderV20();renderOilV20();await loadV21();await loadV22();refreshMissionLink();await loadUsers();await v32Load();await v322Load();await v27Load();await v30Load();v26Render();msg(erreurs.length?'Acces limite : lecture refusee pour '+erreurs.join(', ')+'.':'Donnees chargees depuis Supabase.',erreurs.length>0);
 }catch(e){displayError(e,'Lecture Supabase impossible');}}
 function vehicleName(v){return v.immatriculation||v.numero_immatriculation||v.id}
 function vehicleKm(v){return Number(v.kilometrage_actuel??v.kilometrage??0)}
@@ -1026,6 +1026,15 @@ function openDepartures(vehicleId){
  const closed=new Set(controls.filter(c=>c.type_controle==='RETOUR'&&c.controle_depart_id!=null).map(c=>String(c.controle_depart_id)));
  return controls.filter(c=>c.type_controle==='DEPART'&&String(c.vehicule_id)===String(vehicleId)&&!closed.has(String(c.id))).sort((a,b)=>Number(b.id)-Number(a.id));
 }
+let v322Drivers=[];
+async function v322Load(){
+ const sel=$('v322Driver');v322Drivers=[];sel.replaceChildren(opt('Sélectionner un chauffeur actif'));sel.firstChild.value='';
+ if(hasPermission('enregistrer_depart')||hasPermission('enregistrer_retour')){
+ const {data,error}=await sb.from('chauffeurs_selection').select('id,nom_complet').order('nom_complet');
+ if(error){sel.firstChild.textContent='Registre indisponible';}else{v322Drivers=data||[];for(const d of v322Drivers){const o=opt(d.nom_complet);o.value=String(d.id);sel.append(o);}}
+ }
+ sel.onchange=()=>{$('inspectionForm').elements.namedItem('conducteur').value=v322Drivers.find(d=>String(d.id)===sel.value)?.nom_complet||'';};refreshMissionLink();
+}
 function refreshMissionLink(){
  const f=$('inspectionForm'),phase=val(f,'phase'),vehicle=val(f,'vehicule_id'),box=$('linkedDepartureBox'),select=$('linkedDeparture'),status=$('vehicleMissionStatus');
  const current=select.value;select.replaceChildren();
@@ -1037,7 +1046,7 @@ function refreshMissionLink(){
  select.required=phase==='retour';
  status.className='mission-status'+(opens.length?' warning':'');
  status.textContent=!vehicle?'Sélectionnez un véhicule pour connaître son état.':opens.length?'En mission — '+opens.length+' départ(s) non clôturé(s). '+(phase==='depart'?'Nouveau départ bloqué.':'Sélectionnez le départ à clôturer.'):'Disponible — aucun départ ouvert dans les contrôles accessibles.';
- if(phase==='retour')fillFromDeparture();
+ const driver=$('v322Driver'),name=f.elements.namedItem('conducteur');driver.hidden=phase==='retour';driver.required=phase==='depart';name.hidden=phase!=='retour';if(phase==='retour'){name.value='';fillFromDeparture();}else{name.value=v322Drivers.find(d=>String(d.id)===driver.value)?.nom_complet||'';}
 }
 function fillFromDeparture(){
  const f=$('inspectionForm'),id=$('linkedDeparture').value;
@@ -1074,7 +1083,7 @@ $('inspectionForm').onsubmit=async e=>{
  }
  const dateSaisie=val(f,'date_controle');
  if(!dateSaisie||Number.isNaN(new Date(dateSaisie).getTime()))return msg('Date de contrôle invalide.',true);
- const questionnaire={version:2,chauffeur_nom:val(f,'conducteur'),reference_mission:val(f,'reference_mission')||null,date_controle:new Date(dateSaisie).toISOString(),reponses};
+ const chosen=v322Drivers.find(d=>String(d.id)===$('v322Driver').value);if(phase==='depart'&&!chosen)return msg('Sélectionnez un chauffeur actif du registre.',true);const dq=departure?(typeof departure.questionnaire==='string'?JSON.parse(departure.questionnaire):departure.questionnaire||{}):{};const questionnaire={version:2,chauffeur_registre_id:phase==='depart'?chosen.id:(dq.chauffeur_registre_id||null),chauffeur_nom:phase==='depart'?chosen.nom_complet:val(f,'conducteur'),reference_mission:val(f,'reference_mission')||null,date_controle:new Date(dateSaisie).toISOString(),reponses};
  const payload={vehicule_id:vehicleId,type_controle:phase.toUpperCase(),controle_depart_id:departure?departure.id:null,kilometrage:num(f,'kilometrage'),carburant_litres:num(f,'carburant_litres'),questionnaire,observations:val(f,'observations')||null};
  const btn=f.querySelector('button[type=submit]');btn.disabled=true;
  try{await save('controles',payload,f)}finally{btn.disabled=false;refreshMissionLink()}
