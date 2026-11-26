@@ -926,7 +926,7 @@ function v25Choose(u,action,btn){
 $('v25Edit').onsubmit=e=>{e.preventDefault();const f=e.target;v25Call({action:f.dataset.action,...Object.fromEntries(new FormData(f))},f.querySelector('button'),f)};
 /* ADKOUL V25.1 — matrice des autorisations */
 const V251_LABELS={consulter_controles:'Consulter les contrôles et anomalies',consulter_factures:'Consulter les factures',enregistrer_depart:'Enregistrer les départs',enregistrer_retour:'Enregistrer les retours',gerer_reparations:'Gérer les réparations',gerer_vidanges:'Gérer les vidanges',gerer_vehicules:'Gérer les véhicules'};
-/* ADKOUL V25.2 */
+/* ADKOUL V25.3 — autorisations déroulantes */
 function renderV251Permissions(grants){
  const root=$('v5Permissions');root.replaceChildren();
  const title=document.createElement('h3');title.textContent='Gestion des autorisations';root.append(title);
@@ -937,9 +937,9 @@ function renderV251Permissions(grants){
  const panel=document.createElement('div');root.append(panel);
  select.onchange=()=>{
  panel.replaceChildren();const u=users.find(x=>x.id===select.value);if(!u)return;
- const changes=new Map(),checks=[];
+ const changes=new Map(),checks=[];const dropdown=document.createElement('details');dropdown.style.cssText='border:1px solid #cbdbea;border-radius:8px;padding:12px;margin:12px 0;background:#fff';const summary=document.createElement('summary');summary.style.cssText='cursor:pointer;font-weight:600';dropdown.append(summary);panel.append(dropdown);const refresh=()=>{summary.textContent='Autorisations — '+checks.filter(c=>c.checked).length+' sur '+PERMS.length+' sélectionnées'};
  const btn=document.createElement('button');btn.type='button';btn.textContent='Enregistrer les autorisations';btn.disabled=true;
- for(const perm of PERMS){const row=document.createElement('label');row.className='v5-permission';row.style.cssText='display:flex;align-items:center;gap:12px;margin:8px 0;cursor:pointer';const cb=document.createElement('input');cb.type='checkbox';cb.className='v251-check';cb.style.flex='0 0 18px';const initial=grants.some(g=>g.utilisateur_id===u.id&&g.permission===perm&&g.autorise===true);cb.checked=initial;checks.push(cb);cb.onchange=()=>{if(cb.checked===initial)changes.delete(perm);else changes.set(perm,{utilisateur_id:u.id,permission:perm,autorise:cb.checked});btn.disabled=!changes.size;select.disabled=!!changes.size};const text=document.createElement('span');text.textContent=V251_LABELS[perm]||perm;row.append(cb,text);panel.append(row)}
+ for(const perm of PERMS){const row=document.createElement('label');row.className='v5-permission';row.style.cssText='display:flex;align-items:center;gap:12px;margin:8px 0;cursor:pointer';const cb=document.createElement('input');cb.type='checkbox';cb.className='v251-check';cb.style.flex='0 0 18px';const initial=grants.some(g=>g.utilisateur_id===u.id&&g.permission===perm&&g.autorise===true);cb.checked=initial;checks.push(cb);cb.onchange=()=>{if(cb.checked===initial)changes.delete(perm);else changes.set(perm,{utilisateur_id:u.id,permission:perm,autorise:cb.checked});btn.disabled=!changes.size;select.disabled=!!changes.size;refresh()};const text=document.createElement('span');text.textContent=V251_LABELS[perm]||perm;row.append(cb,text);dropdown.append(row)}refresh();
  const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Annuler les modifications';cancel.onclick=()=>{select.disabled=false;select.onchange()};panel.append(btn,' ',cancel);
  btn.onclick=async()=>{if(!profile?.administrateur_principal||!changes.size)return;btn.disabled=true;cancel.disabled=true;checks.forEach(c=>c.disabled=true);try{const {error}=await sb.from('autorisations').upsert([...changes.values()],{onConflict:'utilisateur_id,permission'});if(error)throw error;await loadUsers();const next=$('v252User');if(next){next.value=u.id;next.onchange()}msg('Autorisations enregistrées. Reconnectez le compte concerné.')}catch(e){displayError(e,'Enregistrement des autorisations impossible');checks.forEach(c=>c.disabled=false);btn.disabled=false;cancel.disabled=false}};
  };
