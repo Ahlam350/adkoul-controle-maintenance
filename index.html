@@ -1308,7 +1308,26 @@ async function v27Load(){
  const total=e('p','Montant : —',f);f.oninput=()=>{total.textContent='Montant : '+(Number(l.value)*Number(p.value)).toLocaleString('fr-FR')+' FCFA'};
  const b=e('button','Enregistrer le ravitaillement',f);b.type='submit';f.onsubmit=async ev=>{ev.preventDefault();if(!hasPermission('gerer_carburant'))return;b.disabled=true;try{const d=new FormData(f);let chemin=null;const file=scan.files[0];if(file){const ext={'application/pdf':'pdf','image/jpeg':'jpg','image/png':'png'}[file.type];if(!ext||file.size>10485760||!file.size)throw Error('Justificatif invalide (PDF/JPG/PNG, 10 Mo maximum)');chemin=profile.id+'/'+crypto.randomUUID()+'.'+ext;const upload=await sb.storage.from('factures-carburant').upload(chemin,file,{contentType:file.type,upsert:false});if(upload.error)throw upload.error;}const {error}=await sb.from('ravitaillements').insert({vehicule_id:Number(d.get('vehicule_id')),date_ravitaillement:d.get('date_ravitaillement'),kilometrage:Number(d.get('kilometrage')),litres:Number(d.get('litres')),prix_unitaire:Number(d.get('prix_unitaire')),station:String(d.get('station')).trim(),numero_facture:d.get('numero_facture')||null,plein_complet:d.has('plein_complet'),chemin_facture:chemin});if(error)throw error;await v27Load();msg('Ravitaillement enregistré.')}catch(err){displayError(err,'Enregistrement carburant impossible')}finally{b.disabled=false}};
  }
- const filter=e('input','');filter.type='month';filter.setAttribute('aria-label','Filtrer par mois');const output=e('div','');const draw=()=>{output.replaceChildren();const rows=v27Rows.filter(r=>!filter.value||r.date_ravitaillement.startsWith(filter.value));e('h3',rows.reduce((a,r)=>a+Number(r.litres),0).toLocaleString('fr-FR')+' L achetés · '+rows.reduce((a,r)=>a+Number(r.montant),0).toLocaleString('fr-FR')+' FCFA',output);const wrap=e('div','',output);wrap.className='tablewrap';const t=e('table','',wrap),h=e('tr','',t);['Date','Véhicule','Km','Litres','Prix/L','Montant','Station','Facture','Plein','Justificatif'].forEach(x=>e('th',x,h));for(const r of rows){const tr=e('tr','',t);[r.date_ravitaillement,labelVehicle(r.vehicule_id),r.kilometrage,r.litres,r.prix_unitaire,r.montant,r.station,r.numero_facture||'—',r.plein_complet?'Complet':'Partiel'].forEach(x=>e('td',String(x),tr));v271Invoice(e('td','',tr),r)}if(!rows.length)e('p','Aucun ravitaillement enregistré.',output)};filter.onchange=draw;draw();
+ const filter=e('input','');filter.type='month';filter.setAttribute('aria-label','Filtrer par mois');const output=e('div','');const draw=()=>{output.replaceChildren();const rows=v27Rows.filter(r=>!filter.value||r.date_ravitaillement.startsWith(filter.value));e('h3',rows.reduce((a,r)=>a+Number(r.litres),0).toLocaleString('fr-FR')+' L achetés · '+rows.reduce((a,r)=>a+Number(r.montant),0).toLocaleString('fr-FR')+' FCFA',output);const wrap=e('div','',output);wrap.className='tablewrap';const t=e('table','',wrap),h=e('tr','',t);['Date','Véhicule','Km','Litres','Prix/L','Montant','Station','Facture','Plein','Justificatif'].forEach(x=>e('th',x,h));for(const r of rows){const tr=e('tr','',t);[r.date_ravitaillement,labelVehicle(r.vehicule_id),r.kilometrage,r.litres,r.prix_unitaire,r.montant,r.station,r.numero_facture||'—',r.plein_complet?'Complet':'Partiel'].forEach(x=>e('td',String(x),tr));v271Invoice(e('td','',tr),r)}if(!rows.length)e('p','Aucun ravitaillement enregistré.',output)};filter.onchange=draw;draw();v28Render(root);
+}
+/* V28 — consommation entre pleins complets */
+function v28Consumption(){
+ const rows=[];
+ for(const v of vehicles){
+ const fills=v27Rows.filter(r=>String(r.vehicule_id)===String(v.id)).sort((a,b)=>String(a.date_ravitaillement).localeCompare(String(b.date_ravitaillement))||Number(a.kilometrage)-Number(b.kilometrage)||Number(a.id)-Number(b.id));
+ let start=null,litres=0,valid=true,last=0;
+ for(const r of fills){const km=Number(r.kilometrage),l=Number(r.litres);
+ if(start){litres+=l;if(!Number.isFinite(l)||l<=0||km<last)valid=false;if(r.plein_complet){const distance=km-Number(start.kilometrage);if(valid&&distance>0)rows.push([vehicleName(v),start.date_ravitaillement,r.date_ravitaillement,distance,litres,100*litres/distance]);}}
+ if(r.plein_complet){start=r;litres=0;valid=true;}last=km;
+ }}return rows;
+}
+function v28Render(root){
+ const d=document.createElement('details');root.append(d);
+ const h=document.createElement('summary');h.textContent='Consommation entre pleins complets';d.append(h);
+ const p=document.createElement('p');p.textContent='Estimation valable uniquement si tous les ravitaillements intermédiaires sont enregistrés.';d.append(p);
+ const rows=v28Consumption();if(!rows.length){const n=document.createElement('p');n.textContent='Deux pleins complets avec kilométrages distincts sont nécessaires.';d.append(n);return;}
+ const t=document.createElement('table');d.append(t);
+ for(const [i,row] of [['Véhicule','Du','Au','Distance (km)','Litres','L/100 km'],...rows.map(r=>[...r.slice(0,4),r[4].toFixed(2),r[5].toFixed(2)])].entries()){const tr=t.insertRow();for(const value of row){const c=document.createElement(i?'td':'th');c.textContent=String(value);tr.append(c);}}
 }
 /* ADKOUL V26 Direction */
 const v26IsDirection=()=>profile?.id==='9233fb82-8455-4691-a714-b30b19356db9'&&!profile.administrateur_principal;
